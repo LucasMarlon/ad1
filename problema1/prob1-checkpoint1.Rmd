@@ -16,9 +16,9 @@ dados = read_csv(file = "./dados/series_from_imdb.csv")
 series = dados %>% filter(series_name %in% c("Friends", "How I Met Your Mother", "Modern Family"))
 ```
 
-#Escolha das séries
+#Escolha das sÃ©ries
 
-Para realizar a análise dos dados escolhi as séries: *Friends*, *How I Met Your Mother* e *Modern Family*, pelo fato das três séries possuírem o mesmo gênero (comédia).
+Para realizar a anÃ¡lise dos dados escolhi as sÃ©ries: *Friends*, *How I Met Your Mother* e *Modern Family*, pelo fato das trÃªs sÃ©ries possuÃ­rem o mesmo gÃªnero (comÃ©dia).
 
 ##Primeira pergunta 
 
@@ -34,21 +34,21 @@ medias = series %>%
              alpha = .7, 
              color = "blue") +
   geom_point(data = medias, colour = "red", size = 2) +
-labs(title = "Box-plot da classificação do usuário", x = "Série", y = "Classificação do usuário")
+labs(title = "Box-plot da classificaÃ§Ã£o do usuÃ¡rio", x = "SÃ©rie", y = "ClassificaÃ§Ã£o do usuÃ¡rio")
 
 ```
 
-O gráfico acima mostra a distribuição das classificações de usuários da IMDB. Podemos observar que a série *Friends* é a que mais se destaca por possuir os maiores valores de média e mediana dentre as séries avaliadas. Além disso *Friends* é a única que não apresenta valores de classificação "estranhos", como podemos ver as séries *How I Met Your Mother* e *Modern Family* possuem valores de classifação inferiores a 6.0.
+O grÃ¡fico acima mostra a distribuiÃ§Ã£o das classificaÃ§Ãµes de usuÃ¡rios da IMDB. Podemos observar que a sÃ©rie *Friends* Ã© a que mais se destaca por possuir os maiores valores de mÃ©dia e mediana dentre as sÃ©ries avaliadas. AlÃ©m disso *Friends* Ã© a Ãºnica que nÃ£o apresenta valores de classificaÃ§Ã£o "estranhos", como podemos ver as sÃ©ries *How I Met Your Mother* e *Modern Family* possuem valores de classifaÃ§Ã£o inferiores a 6.0.
 
-Ao observamos a dispersão  dos valores no gráfico acima, e levando em consideração a classificação do usuário (UserRating), a média e a mediana como métrica de comparacão, podemos concluir que *Friends* é a série mais bem avalidada no IMDB em relação as outras duas. A mediana nos ajuda a perceber onde fica a maior concentração de avaliações das séries, diminuindo o vies de *outliers*. 
+Ao observamos a dispersÃ£o  dos valores no grÃ¡fico acima, e levando em consideraÃ§Ã£o a classificaÃ§Ã£o do usuÃ¡rio (UserRating), a mÃ©dia e a mediana como mÃ©trica de comparacÃ£o, podemos concluir que *Friends* Ã© a sÃ©rie mais bem avalidada no IMDB em relaÃ§Ã£o as outras duas. A mediana nos ajuda a perceber onde fica a maior concentraÃ§Ã£o de avaliaÃ§Ãµes das sÃ©ries, diminuindo o vies de *outliers*. 
 
-A diferança entre as classificações das séries é pequena, principalmente entre as séries *Friends* e *How I Met Your Mother*, visto que a maior parte dos valores de classificação do usuário estão entre 7.5 e 9.0. 
+A diferanÃ§a entre as classificaÃ§Ãµes das sÃ©ries Ã© pequena, principalmente entre as sÃ©ries *Friends* e *How I Met Your Mother*, visto que a maior parte dos valores de classificaÃ§Ã£o do usuÃ¡rio estÃ£o entre 7.5 e 9.0. 
 
-Para melhor entendimento dos valores de classificações dos usuários, vamos observar a frequência das notas para cada série, através do gráfico de barras. 
+Para melhor entendimento dos valores de classificaÃ§Ãµes dos usuÃ¡rios, vamos observar a frequÃªncia das notas para cada sÃ©rie, atravÃ©s do grÃ¡fico de barras. 
 
 ###Friends 
 
-No gráfico abaixo podemos observar a frequência das classificações dos usuários para a série *Friends*. Conseguimos perceber que a maior frequência de classificações é da nota 8.5, o que nos faz esperar que a média e a mediana estejam próximas desse valor.   
+No grÃ¡fico abaixo podemos observar a frequÃªncia das classificaÃ§Ãµes dos usuÃ¡rios para a sÃ©rie *Friends*. Conseguimos perceber que a maior frequÃªncia de classificaÃ§Ãµes Ã© da nota 8.5, o que nos faz esperar que a mÃ©dia e a mediana estejam prÃ³ximas desse valor.   
 
 ```{r}
 series %>%
@@ -56,11 +56,11 @@ series %>%
     ggplot(aes(x = UserRating)) + 
     geom_histogram(binwidth = .5, fill = "blue", color = "black") + 
     geom_rug() +
-  labs(title = "Histograma da classificação do usuário", x = "Classificação do usuário", y = "Frequência")
+  labs(title = "Histograma da classificaÃ§Ã£o do usuÃ¡rio", x = "ClassificaÃ§Ã£o do usuÃ¡rio", y = "FrequÃªncia")
 ```
 
 ```{r}
-#Média:
+#MÃ©dia:
 median((series %>%  filter(series_name == "Friends"))$UserRating)
 #Mediana
 mean((series %>%  filter(series_name == "Friends"))$UserRating)
@@ -69,7 +69,7 @@ mean((series %>%  filter(series_name == "Friends"))$UserRating)
 
 ###How I Met Your Mother 
 
-No gráfico abaixo podemos observar a frequência das classificações dos usuários para a série *How I Met Your Mother*. Conseguimos perceber que a maior frequência de classificações está entre as notas 8.0 e ~8.5, o que nos faz esperar que a média e a mediana estejam dentro deste intervalo.   
+No grÃ¡fico abaixo podemos observar a frequÃªncia das classificaÃ§Ãµes dos usuÃ¡rios para a sÃ©rie *How I Met Your Mother*. Conseguimos perceber que a maior frequÃªncia de classificaÃ§Ãµes estÃ¡ entre as notas 8.0 e ~8.5, o que nos faz esperar que a mÃ©dia e a mediana estejam dentro deste intervalo.   
 
 ```{r}
 series %>%
@@ -77,11 +77,11 @@ series %>%
     ggplot(aes(x = UserRating)) + 
     geom_histogram(binwidth = .5, fill = "blue", color = "black") + 
     geom_rug() +
-  labs(title = "Histograma da classificação do usuário", x = "Classificação do usuário", y = "Frequência")
+  labs(title = "Histograma da classificaÃ§Ã£o do usuÃ¡rio", x = "ClassificaÃ§Ã£o do usuÃ¡rio", y = "FrequÃªncia")
 ```
 
 ```{r}
-#Média:
+#MÃ©dia:
 median((series %>%  filter(series_name == "How I Met Your Mother"))$UserRating)
 #Mediana
 mean((series %>%  filter(series_name == "How I Met Your Mother"))$UserRating)
@@ -90,7 +90,7 @@ mean((series %>%  filter(series_name == "How I Met Your Mother"))$UserRating)
 
 ###Modern Family
 
-No gráfico abaixo podemos observar a frequência das classificações dos usuários para a série *Modern Family*. Conseguimos perceber que a maior frequência de classificações é da nota 8.0, o que nos faz esperar que a média e a mediana estejam próximas desse valor. 
+No grÃ¡fico abaixo podemos observar a frequÃªncia das classificaÃ§Ãµes dos usuÃ¡rios para a sÃ©rie *Modern Family*. Conseguimos perceber que a maior frequÃªncia de classificaÃ§Ãµes Ã© da nota 8.0, o que nos faz esperar que a mÃ©dia e a mediana estejam prÃ³ximas desse valor. 
 
 ```{r}
 series %>%
@@ -98,11 +98,11 @@ series %>%
     ggplot(aes(x = UserRating)) + 
     geom_histogram(binwidth = .5, fill = "blue", color = "black") + 
     geom_rug() +
-  labs(title = "Histograma da classificação do usuário", x = "Classificação do usuário", y = "Frequência")
+  labs(title = "Histograma da classificaÃ§Ã£o do usuÃ¡rio", x = "ClassificaÃ§Ã£o do usuÃ¡rio", y = "FrequÃªncia")
 ```
 
 ```{r}
-#Média:
+#MÃ©dia:
 median((series %>%  filter(series_name == "Modern Family"))$UserRating)
 #Mediana
 mean((series %>%  filter(series_name == "Modern Family"))$UserRating)
@@ -111,7 +111,7 @@ mean((series %>%  filter(series_name == "Modern Family"))$UserRating)
 
 ##Segunda pergunta 
 
-Quanto a irregularidade da qualidade dos episódios segundo o IMDB, temos o seguinte:
+Quanto a irregularidade da qualidade dos episÃ³dios segundo o IMDB, temos o seguinte:
 
 ###Friends
 
@@ -121,12 +121,12 @@ series %>%  filter(series_name == "Friends") %>%
   ggplot(aes(x = season_ep, y = UserRating, color = Temporada)) + 
   geom_line() + 
   geom_point() +
-  labs(title = "Classificação do usuário ao longo da temporada", x = "Episódio", y = "Classificação do usuário")
+  labs(title = "ClassificaÃ§Ã£o do usuÃ¡rio ao longo da temporada", x = "EpisÃ³dio", y = "ClassificaÃ§Ã£o do usuÃ¡rio")
 ```
 
-Como podemos observar no gráfico acima, de modo geral, a série *Friends* possui grande irregularidade de qualidade de episódios na maioria de suas temporadas, apresentando alguns picos altos e outros baixos nas temporadas 4, 5 e 8, por exemplo.
+Como podemos observar no grÃ¡fico acima, de modo geral, a sÃ©rie *Friends* possui grande irregularidade de qualidade de episÃ³dios na maioria de suas temporadas, apresentando alguns picos altos e outros baixos nas temporadas 4, 5 e 8, por exemplo.
 
-**Observação:** A linha da temporada 1 aparece duas vezes devido a duplicação dos dados no arquivo series_from_imdb.csv.  
+**ObservaÃ§Ã£o:** A linha da temporada 1 aparece duas vezes devido a duplicaÃ§Ã£o dos dados no arquivo series_from_imdb.csv.  
 
 
 ###How I Met Your Mother
@@ -137,10 +137,10 @@ series %>%  filter(series_name == "How I Met Your Mother") %>%
   ggplot(aes(x = season_ep, y = UserRating, color = Temporada)) + 
   geom_line() + 
   geom_point() +
-  labs(title = "Classificação do usuário ao longo da temporada", x = "Episódio", y = "Classificação do usuário")
+  labs(title = "ClassificaÃ§Ã£o do usuÃ¡rio ao longo da temporada", x = "EpisÃ³dio", y = "ClassificaÃ§Ã£o do usuÃ¡rio")
 ```
 
-Como podemos observar no gráfico acima, de modo geral a série *How I Met Your Mother* possui pequena irregularidade de qualidade de episódios na maioria de suas temporadas. Porém, o que nos chama atenção é a irregularidade de qualidade de episódios da última temporada (9), o que nos mostra que por sinal os fãs da série não ficaram nada satisfeitos com o desfecho da temporada. 
+Como podemos observar no grÃ¡fico acima, de modo geral a sÃ©rie *How I Met Your Mother* possui pequena irregularidade de qualidade de episÃ³dios na maioria de suas temporadas. PorÃ©m, o que nos chama atenÃ§Ã£o Ã© a irregularidade de qualidade de episÃ³dios da Ãºltima temporada (9), o que nos mostra que por sinal os fÃ£s da sÃ©rie nÃ£o ficaram nada satisfeitos com o desfecho da temporada. 
 
 
 ###Modern Family
@@ -151,11 +151,11 @@ series %>%  filter(series_name == "Modern Family") %>%
   ggplot(aes(x = season_ep, y = UserRating, color = Temporada)) + 
   geom_line() + 
   geom_point() +
-  labs(title = "Classificação do usuário ao longo da temporada", x = "Episódio", y = "Classificação do usuário")
+  labs(title = "ClassificaÃ§Ã£o do usuÃ¡rio ao longo da temporada", x = "EpisÃ³dio", y = "ClassificaÃ§Ã£o do usuÃ¡rio")
 ```
 
-Como podemos observar no gráfico acima, de modo geral a série *Modern Family* também possui pequena irregularidade de qualidade de episódios na maioria de suas temporadas, apresentando alguns picos altos nas temporadas 5 e 6, por exemplo. E na última temporada (8) nos chama bastante atenção, visto que possui grande irregularidade de qualidade dos episódios, com picos altos e baixos. 
+Como podemos observar no grÃ¡fico acima, de modo geral a sÃ©rie *Modern Family* tambÃ©m possui pequena irregularidade de qualidade de episÃ³dios na maioria de suas temporadas, apresentando alguns picos altos nas temporadas 5 e 6, por exemplo. E na Ãºltima temporada (8) nos chama bastante atenÃ§Ã£o, visto que possui grande irregularidade de qualidade dos episÃ³dios, com picos altos e baixos. 
 
-De modo geral, dentre as séries que eu escolhi a que possui mais irregularidade de qualidade dos episódios é *Friends*, pois é a que apresenta mais picos altos e baixos em mais temporadas. E a diferença de irregularidade da qualidade dos episódios entre as três séries é pequena.
+De modo geral, dentre as sÃ©ries que eu escolhi a que possui mais irregularidade de qualidade dos episÃ³dios Ã© *Friends*, pois Ã© a que apresenta mais picos altos e baixos em mais temporadas. E a diferenÃ§a de irregularidade da qualidade dos episÃ³dios entre as trÃªs sÃ©ries Ã© pequena.
 
 
