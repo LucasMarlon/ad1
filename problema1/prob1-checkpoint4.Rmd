@@ -1,0 +1,56 @@
+---
+title: "Problema 1 - Checkpoint 4"
+author: "Lucas Marlon"
+date: "26 de maio de 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("dplyr")
+library("tidyr")
+library("ggplot2")
+library("readr")
+
+dados = read_csv(file = "dados/series_from_imdb.csv")
+series = dados %>% filter(series_name %in% c("Friends", "How I Met Your Mother", "Modern Family", "Sense8", "The 100"))
+```
+
+## Relatório Final
+
+Qual das séries possui maior avaliação na primeira temporada?
+
+Inicialmente essa pergunta foi pensada para ser respondida usando os dados de todas as séries, pórem percebi que a quantidade de séries é um pouco grande e isso pode dificultar a obtenção dos resultados. Sendo assim, resolvi ficar com as três séries que escolhi no checkpoint 1, *Friends*, *How I Met Your Mother* e *Modern Family*, e acrescentar mais duas que séries, que são: *Sense8* e *The 100*.   
+
+```{r}
+medias = series %>% 
+  filter(season==1) %>%
+  group_by(series_name) %>% 
+  summarise(UserRating = mean(UserRating))
+
+  ggplot(series, mapping = aes(x = series_name, 
+                             y = UserRating)) +
+  geom_boxplot(outlier.colour = NA) +
+  geom_point(position = position_jitter(width = .2), 
+             alpha = .7, 
+             color = "blue") +
+  geom_point(data = medias, colour = "red", size = 2) +
+labs(title = "Box-plot da classifição do usuário para a primeira temporada", x = "Série", y = "Classificação do usuário")
+
+```
+
+Existem repercussões de que os fãs de How I Met Your Mother não ficaram muito satisfeitos com o desfecho da nona temporada da série. A partir de qual(is) episódio(s) essa insatisfação ficou evidente?  
+
+```{r}
+series %>%  
+  filter(series_name == "How I Met Your Mother", season == 1) %>% 
+  ggplot(aes(x = season_ep, y = UserRating)) + 
+  geom_line() + 
+  geom_point() +
+  scale_x_continuous(breaks=seq(1, 23, 1))+
+  labs(title = "Classificação do usuário ao longo da nona temporada de HIMYM", x = "Episódio", y = "Classificação do usuário")
+```
+
+
+
+
