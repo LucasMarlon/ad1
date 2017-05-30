@@ -13,19 +13,67 @@ library("ggplot2")
 library("readr")
 
 dados = read_csv(file = "dados/series_from_imdb.csv")
-series = dados %>% filter(series_name %in% c("Friends", "How I Met Your Mother", "Modern Family", "Sense8", "The 100"))
+series = dados %>% filter(series_name %in% c("Friends", "How I Met Your Mother", "Modern Family"))
 ```
 
 ## Relatório Final
 
-Qual das séries possui maior avaliação na primeira temporada?
+### Pergunta 1
 
-Inicialmente essa pergunta foi pensada para ser respondida usando os dados de todas as séries, pórem percebi que a quantidade de séries é um pouco grande e isso pode dificultar a obtenção dos resultados. Sendo assim, resolvi ficar com as três séries que escolhi no checkpoint 1, *Friends*, *How I Met Your Mother* e *Modern Family*, e acrescentar mais duas que séries, que são: *Sense8* e *The 100*.   
+A primeira pergunta que escolhi foi: **Qual das séries possui maior avaliação na primeira temporada?**
+
+Inicialmente essa pergunta foi pensada para ser respondida usando os dados de todas as séries, porém percebi que a quantidade de séries é um pouco grande e isso pode dificultar a obtenção dos resultados. Sendo assim, resolvi ficar com as três séries que escolhi no checkpoint 1, *Friends*, *How I Met Your Mother* e *Modern Family*.
+
+Inicialmente vamos verificar a frequência de notas dentre a classificação dos usuários para cada uma das séries, assim podemos explicar melhor a variável a ser avaliada.
+
+###Friends
+
+No gráfico abaixo podemos observar a frequência das classificações dos usuários para a série *Friends* para a primeira temporada da série. Conseguimos perceber que a maior frequência de classificações é da nota 8.5, o que nos faz esperar que a média e a mediana durante a primeira temporada estejam próximas desse valor.   
+
+```{r}
+series %>%
+  filter(series_name == "Friends", season == 1) %>%
+    ggplot(aes(x = UserRating)) + 
+    geom_histogram(binwidth = .5, fill = "blue", color = "black") + 
+    geom_rug() +
+  labs(title = "Classificação do usuário durante a primeira temporada", x = "Classificação do usuário", y = "Frequência")
+```
+
+
+###How I Met Your Mother
+
+No gráfico abaixo podemos observar a frequência das classificações dos usuários para a série *How I Met Your Mother* para a primeira temporada da série. Conseguimos perceber que a maior frequência de classificações está entre as notas 8.0 e ~8.5, o que nos faz esperar que a média e a mediana durante a primeira temporada estejam próximas desse valor.   
+
+```{r}
+series %>%
+  filter(series_name == "How I Met Your Mother", season == 1) %>%
+    ggplot(aes(x = UserRating)) + 
+    geom_histogram(binwidth = .5, fill = "blue", color = "black") + 
+    scale_y_continuous(breaks=seq(1, 10, 1))+
+    geom_rug() +
+  labs(title = "Classificação do usuário durante a primeira temporada", x = "Classificação do usuário", y = "Frequência")
+```
+
+###Modern Family
+
+No gráfico abaixo podemos observar a frequência das classificações dos usuários para a série *Modern Family* para a primeira temporada da série. Conseguimos perceber que a maior frequência de classificações é da nota 8.0, o que nos faz esperar que a média e a mediana durante a primeira temporada estejam próximas desse valor.   
+
+```{r}
+series %>%
+  filter(series_name == "Modern Family", season == 1) %>%
+    ggplot(aes(x = UserRating)) + 
+    geom_histogram(binwidth = .5, fill = "blue", color = "black") + 
+    scale_y_continuous(breaks=seq(1, 20, 5))+
+    geom_rug() +
+  labs(title = "Classificação do usuário durante a primeira temporada", x = "Classificação do usuário", y = "Frequência")
+```
+
+No gráfico abaixo podemos observar a distribuição da classificação dos usuários para as três séries durante a primeira temporada de cada uma delas. Através dele também conseguimos observar as métricas média e mediana, além dos valores extremos (máximo e mínimo).   
 
 ```{r}
 medias = series %>% 
-  filter(season==1) %>%
   group_by(series_name) %>% 
+  filter(season == 1) %>%
   summarise(UserRating = mean(UserRating))
 
   ggplot(series, mapping = aes(x = series_name, 
@@ -39,7 +87,36 @@ labs(title = "Box-plot da classifição do usuário para a primeira temporada", 
 
 ```
 
-Existem repercussões de que os fãs de How I Met Your Mother não ficaram muito satisfeitos com o desfecho da nona temporada da série. A partir de qual(is) episódio(s) essa insatisfação ficou evidente?  
+```{r}
+# Mediana para classificação da primeira temporada da série Friends:
+median((series %>%  filter(series_name == "Friends", season == 1))$UserRating)
+# Média para classificação da primeira temporada da série Friends:
+mean((series %>%  filter(series_name == "Friends", season == 1))$UserRating)
+```
+```{r}
+# Mediana para classificação da primeira temporada da série How I Met Your Mother:
+median((series %>%  filter(series_name == "How I Met Your Mother", season == 1))$UserRating)
+# Média para classificação da primeira temporada da série How I Met Your Mother:
+mean((series %>%  filter(series_name == "How I Met Your Mother", season == 1))$UserRating)
+```
+
+
+```{r}
+# Mediana para classificação da primeira temporada da série Modern Family:
+median((series %>%  filter(series_name == "Modern Family", season == 1))$UserRating)
+# Média para classificação da primeira temporada da série Modern Family:
+mean((series %>%  filter(series_name == "Modern Family", season == 1))$UserRating)
+```
+
+Como podemos observar, as métricas média e mediana são quase iguais para as séries *Friends* e *How I Met Your Mother*, ficando *Modern Family* com a menor avaliação para a primeira temporada, dentre as três séries. No entanto, podemos observar no gráfico de dispersão que a série *How I Met Your Mother* possui alguns valores extremos mínimos bem abaixo dos valores extremos mínimos da série *Friends*, além de que *Friends* possui uma maior concentração de valores próximos da média, comparando com *How I Met Your Mother*. Sendo assim, acredito que a série que possui maior avaliação na primeira temporada é ***Friends***.
+
+### Pergunta 2
+
+A segunda pergunta que escolhi foi: **Existem repercussões de que os fãs de How I Met Your Mother não ficaram muito satisfeitos com o desfecho da nona temporada da série. A partir de qual(is) episódio(s) essa insatisfação ficou evidente?** 
+
+Há poucos meses comecei a assistir a série *How I Met Your Mother* (HIMYM), e todos as pessoas que conheço que já terminaram de assistir a última temporada (9) disseram que talvez eu não fosse gostar, alguns chegaram a afirmar que eu iria amar ou odiar o grande desfecho. Desde então eu procuro tempo para chegar a tão esperada nona temporada, mas ainda não cheguei, rsrs... Enfim, foi por isso que pensei nessa pergunta, a qual achei um questionamento interessante e vou tentar entender o que aconteceu através do gráfico abaixo.
+
+O gráfico mostra a classificação do usuário durante toda a nona temporada. Podemos observar que no segundo episódio os dados já nos mostram uma pequena queda da classificação do usuário, mas é lá no sétimo episódio que aparece a pior classificação. Três episódios depois podemos ver a melhor classificação da temporada, porém depois volta a cair, depois sobe novamente e assim continua oscilando até o final da temporada, onde observamos que pelo menos pela classificação do usuário dada pela IMDB é um bom fim de temporada, rsrs. Talvez nem todos tenham ficados insatisfeitos com o desfecho da nona temporada de HIMYM. Acredito que vale a pena assistir até o fim!  
 
 ```{r}
 series %>%  
@@ -51,6 +128,28 @@ series %>%
   labs(title = "Classificação do usuário ao longo da nona temporada de HIMYM", x = "Episódio", y = "Classificação do usuário")
 ```
 
+**Nova pergunta:** Será que a que variável **UserVotes** nos traz uma conclusão diferente em relação a pergunta 2?  
 
+```{r}
+series %>%  
+  filter(series_name == "How I Met Your Mother", season == 1) %>% 
+  ggplot(aes(x = season_ep, y = UserVotes)) + 
+  geom_line() + 
+  geom_point() +
+  scale_x_continuous(breaks=seq(1, 23, 1))+
+  labs(title = "Número de votos ao longo da nona temporada de HIMYM", x = "Episódio", y = "Número de votos")
+```
 
+No gráfico acima podemos observar que a partir do segundo episódio os dados já nos mostram uma queda através do número de votos, assim como na avaliação pela classificação do usuário. Porém, diferente do que observamos na resposta da pergunta 2 o sétimo episódio não é o que apresenta a maior queda no número de votos, mas sim os episódios 16, 17, 20 e 21. Aqui também podemos observar uma coisa bem interessante, no último episódio o número de votos volta a subir, porém não parece subir tanto quanto a classificação do usuário subiu no gráfico que analisamos para reponder a pergunta 2. 
 
+```{r}
+series %>% 
+  group_by(series_name) %>%
+  filter(series_name == "How I Met Your Mother", season == 1) %>% 
+  summarise(correlacao_linear = cor(UserVotes, UserRating, 
+                                      method = "pearson"), 
+            correlacao_kendall = cor(UserVotes, UserRating, 
+                                       method = "kendall"))
+```
+
+A tabela acima nos mostra que o coeficiente de correlação linear está distante tanto de -1 quanto de +1. Então, podemos dizer que existe uma correlação linear fraca entre a classificação dos usuários e o número de votos dos usuários, ou seja, o número de votos não irá necessariamente significar uma classificação boa ou ruim segundo o IMDB.
