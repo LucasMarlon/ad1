@@ -5,6 +5,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+library("plotly")
 library("dplyr")
 library("tidyr")
 library("ggplot2")
@@ -23,15 +24,19 @@ serie = dados %>% filter(series_name %in% c("How I Met Your Mother"))
   Vamos tentar inferir se meus amigos estão falando a verdade e entender o que aconteceu a partir do gráfico abaixo:
 
 ```{r}
-serie %>%  
+p = serie %>%  
   filter(series_name == "How I Met Your Mother", season == 9) %>% 
   ggplot(aes(x = season_ep, 
              y = UserRating)) + 
   geom_line() + 
-  geom_point(color = "red", size = 2) +
+  geom_point(aes(text = paste("Episódio:", season_ep, "<br>", "Classificação:", UserRating)), 
+             color = "blue", 
+             size = 2) +
+  scale_color_gradient(low="yellow", high="red") +
   scale_x_continuous(breaks=seq(1, 25, 1))+
   labs(title = "Classificação do usuário ao longo da nona temporada de HIMYM", x = "Episódio", y = "Classificação do usuário")
 
+ggplotly(p, tooltip = "text")
 
 ```
 
