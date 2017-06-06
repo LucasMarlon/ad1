@@ -1,0 +1,39 @@
+---
+title: "Problema 2 - Checkpoint 1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library("dplyr")
+library("tidyr")
+library("ggplot2")
+library("readr")
+
+dados = read_csv(file = "dados/series_from_imdb.csv")
+serie = dados %>% filter(series_name %in% c("How I Met Your Mother"))
+```
+
+##How I Met Your Mother
+
+**Existem repercussões de que os fãs de How I Met Your Mother não ficaram muito satisfeitos com o desfecho da nona temporada da série. Vamos verificar a partir de qual(is) episódio(s) essa insatisfação ficou evidente?** 
+
+  Há poucos meses comecei a assistir a série *How I Met Your Mother* (HIMYM), e todos as pessoas que conheço que já terminaram de assistir a última temporada (9) me disseram que talvez eu não fosse gostar, alguns chegaram a afirmar que eu iria amar ou odiar o grande desfecho. Desde então eu procuro tempo para chegar a tão esperada nona temporada, mas ainda não cheguei, rsrs... 
+
+  Vamos tentar inferir se meus amigos estão falando a verdade e entender o que aconteceu a partir do gráfico abaixo:
+
+```{r}
+serie %>%  
+  filter(series_name == "How I Met Your Mother", season == 9) %>% 
+  ggplot(aes(x = season_ep, 
+             y = UserRating)) + 
+  geom_line() + 
+  geom_point(color = "red", size = 2) +
+  scale_x_continuous(breaks=seq(1, 25, 1))+
+  labs(title = "Classificação do usuário ao longo da nona temporada de HIMYM", x = "Episódio", y = "Classificação do usuário")
+
+
+```
+
+  No gráfico acima, podemos observar que a partir do segundo episódio os dados já nos mostram uma pequena queda da classificação dos usuários, mas é lá no décimo primeiro episódio que aparece uma das piores classificações da temporada. Nos dois próximos episódios observamos uma melhora na classificação, porém depois volta a cair, depois sobe novamente e assim continua oscilando até o final da temporada, onde no último episódio da temporada observamos a pior classificação segundo o IMDB. O que nos faz acreditar que meus amigos estejam certos em relação a insatisfação dos fãs de HIMYM. Mesmo assim continuo curioso para assistir a série até o fim!
+
