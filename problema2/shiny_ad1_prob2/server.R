@@ -18,55 +18,34 @@ dados = read_csv(file = "series_from_imdb.csv")
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
-  
-  output$distPlot <- renderPlotly({
     
-    serie <- paste(input$series)
-    
-    if (length(serie) >= 1) {
-      dados = dados %>% filter(series_name == serie, season == 1) 
-      dados %>%
-        ggplot(aes(x = UserRating)) + 
-        geom_histogram(binwidth = .5, fill = "blue", color = "black") + 
-        geom_rug() +
-        labs(title = "Classificação do usuário durante a primeira temporada", 
-             x = "Classificação do usuário", 
-             y = "Frequência")
-    }
-    
-    
-    #str_series <- paste(toString(input$series), collapse = ", ")
-    
-    #if(str_series != "") {
+    output$distPlot <- renderPlotly({
       
-    #  print("Entrou no if...")
-    #  print(str_series)
+      dados <- dados %>% filter(series_name %in% input$series, season == 1)
       
-    #  for(serie in c(str_series)) {
-        
-    #    str <- paste(serie) 
-        
-    #    print(str)
-        
-    #    dados = dados %>% filter(series_name == str, season == 1) 
-    #    dados %>%
-    #      ggplot(aes(x = UserRating)) + 
-    #      geom_histogram(binwidth = .5, fill = "blue", color = "black") + 
-    #      geom_rug() +
-    #      labs(title = "Classificação do usuário durante a primeira temporada", 
-    #           x = "Classificação do usuário", 
-    #           y = "Frequência")
-        
-    #  }
-      
-    #}
-  
-  
-  })
-  
-  output$txt <- renderText({
-    serie <- paste(input$series, collapse = ", ")
-    paste("Você escolheu: ", serie)
-  })
+      if(length(input$series) >= 1) {
+        dados %>%
+          ggplot(aes(x = season_ep, 
+                     y = UserRating)) + 
+          geom_line() + 
+          geom_point(aes(text = paste("Episódio:", season_ep, "<br>", "Classificação:", UserRating)), 
+                     color = "blue", 
+                     size = 2) +
+          scale_x_continuous(breaks=seq(1, 25, 5))+
+          facet_wrap(~series_name, scales = "free_x") +
+          labs(title = "Classificação do usuário ao longo da nona temporada de HIMYM", x = "Episódio", y = "Classificação do usuário") %>% return()  
+      } else {
+        dados %>%
+          ggplot(aes(x = UserRating)) + 
+          geom_histogram(binwidth = .5, fill = "blue", color = "black") + 
+          geom_rug() +
+          labs(title = "Classificação do usuário ao longo da nona temporada de HIMYM", x = "Episódio", y = "Classificação do usuário") %>% return()
+      }
+    })
+    
+    output$txt <- renderText({
+      serie <- paste(input$series, collapse = ", ")
+      paste("Você escolheu: ", serie)
+    })
   
 })
