@@ -43,15 +43,22 @@ shinyUI(fluidPage(
                                 "Stranger Things",
                                 "The 100")
       ),
-      textOutput("txt")
+      radioButtons("tipo", "Escolha o tipo de visualização: ",
+                   choiceNames = list(
+                     "Gráfico de linhas",
+                     "Gráfico de barras"
+                   ),
+                   choiceValues = list(
+                     "linhas", "barras"
+                   ))
     ),
     
     # Show a plot of the generated distribution
     mainPanel(
-      h2("Qual das séries possui maior avaliação na 1ª temporada?"),
+      h2("Qual das séries possui melhor avaliação na 1ª temporada?"),
       p("Vamos investigar como se comportou a avaliação dos usuários durante a 1ª temporada das séries. 
-        Ao lado você pode escolher as séries que preferir e observar qual delas obteve melhor avaliação."),
-      p("Para responder essa pergunta vamos olhar para os gráficos que representam a curva de avaliação de todos os episódios das séries."),
+        Ao lado você pode escolher as séries que preferir para observar qual delas obteve melhor avaliação. Além disso você também pode escolher o tipo de visualização dos dados."),
+      p("Para nos ajudar a responder essa pergunta vamos observar e analisar os gráficos abaixo:"),
       plotlyOutput("distPlot")
     )
   )
