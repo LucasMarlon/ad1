@@ -21,25 +21,52 @@ shinyServer(function(input, output) {
     
     output$distPlot <- renderPlotly({
       
-      dados <- dados %>% filter(series_name %in% input$series, season == 1)
+      dados = dados %>% filter(series_name %in% input$series, season == 1)
       
-      if(length(input$series) >= 1) {
-        dados %>%
-          ggplot(aes(x = season_ep, 
-                     y = UserRating)) + 
-          geom_line() + 
-          geom_point(aes(text = paste("Episódio:", season_ep, "<br>", "Classificação:", UserRating)), 
-                     color = "blue", 
-                     size = 2) +
-          scale_x_continuous(breaks=seq(1, 25, 5))+
-          facet_wrap(~series_name, scales = "free_x") +
-          labs(title = "Classificação do usuário ao longo da nona temporada de HIMYM", x = "Episódio", y = "Classificação do usuário") %>% return()  
+      p <- dados %>%
+        ggplot(aes(x = season_ep, 
+                   y = UserRating)) + 
+        geom_line() + 
+        geom_point(aes(text = paste("Episódio:", season_ep, "<br>", "Classificação:", UserRating)), 
+                   color = "blue", 
+                   size = 1.0) +
+        scale_x_continuous(breaks=seq(1, 25, 5))+
+        xlab("Episódio") + 
+        ylab("Classificação do usuário") +
+        ggtitle("Classificação do usuário ao longo da 1ª temporada")
+      
+      if (length(input$series) == 2) {
+
+        p <- p + facet_wrap(~series_name, scales = "free_x", nrow = 2, ncol = 1)
+
+        ggplotly(p, tooltip = "text") %>%
+          layout(margin=list(r=100, l=70, t=-10, b=70, pad = 0), 
+                 width = "1000px", height="600px") %>% return()
+      } else if(length(input$series) == 3) {
+        
+        p <- p + facet_wrap(~series_name, scales = "free_x", nrow = 2, ncol = 2)
+        
+        ggplotly(p, tooltip = "text") %>%
+          layout(margin=list(r=100, l=70, t=-10, b=70, pad = 0), 
+                 width = "1000px", height="600px") %>% return()
+      } else if(length(input$series) >= 1) {
+
+        p <- p + facet_wrap(~series_name, scales = "free_x")
+
+        ggplotly(p, tooltip = "text") %>%
+          layout(margin=list(r=100, l=70, t=-10, b=70, pad = 0), 
+                 width = "1000px", height="600px") %>% return()
       } else {
-        dados %>%
-          ggplot(aes(x = UserRating)) + 
-          geom_histogram(binwidth = .5, fill = "blue", color = "black") + 
+        p <- dados %>%
+          ggplot(aes(x = UserRating)) +
+          geom_histogram(binwidth = .5, fill = "blue", color = "black") +
           geom_rug() +
-          labs(title = "Classificação do usuário ao longo da nona temporada de HIMYM", x = "Episódio", y = "Classificação do usuário") %>% return()
+          labs(title = "Classificação do usuário ao longo da 1ª temporada", 
+               x = "Episódio", y = "Classificação do usuário")
+
+        ggplotly(p, tooltip = "text") %>%
+          layout(margin=list(r=100, l=70, t=-10, b=70, pad = 0),
+                 width = "1000px", autosize=TRUE) %>% return()
       }
     })
     

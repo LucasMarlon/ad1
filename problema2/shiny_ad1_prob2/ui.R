@@ -22,28 +22,36 @@ shinyUI(fluidPage(
       checkboxGroupInput("series", "Escolha as séries:",
                          choiceNames =
                            list("13 Reasons Why", 
-                                "Friends", 
+                                "Friends",
+                                "Grey’s Anatomy",
                                 "How I Met Your Mother", 
                                 "Modern Family",
                                 "Once Upon a Time",
                                 "Sherlock",
                                 "Sense8",
-                                "Stranger Things"),
+                                "Stranger Things",
+                                "The 100"),
                          choiceValues =
                            list("13 Reasons Why", 
-                                "Friends", 
+                                "Friends",
+                                "Grey’s Anatomy",
                                 "How I Met Your Mother", 
                                 "Modern Family",
                                 "Once Upon a Time",
                                 "Sherlock",
                                 "Sense8",
-                                "Stranger Things")
+                                "Stranger Things",
+                                "The 100")
       ),
       textOutput("txt")
     ),
     
     # Show a plot of the generated distribution
     mainPanel(
+      h2("Qual das séries possui maior avaliação na 1ª temporada?"),
+      p("Vamos investigar como se comportou a avaliação dos usuários durante a 1ª temporada das séries. 
+        Ao lado você pode escolher as séries que preferir e observar qual delas obteve melhor avaliação."),
+      p("Para responder essa pergunta vamos olhar para os gráficos que representam a curva de avaliação de todos os episódios das séries."),
       plotlyOutput("distPlot")
     )
   )
