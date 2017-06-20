@@ -1,5 +1,5 @@
 ---
-title: "Problema 3"
+title: "Prob 3, CP1 - Agrupamento com 2 dimensões"
 output: html_document
 ---
 
@@ -7,21 +7,23 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r message=FALSE, echo=FALSE, warning=FALSE}
 library(tidyverse, warn.conflicts = F)
 library(rvest)
 library(plotly)
 library(cluster)
 library(ggdendro)
 theme_set(theme_light())
+source("plota_solucoes_hclust.R")
 ```
 
 
-## Checkpoint 1
+## Filmes de Johnny Depp
 
-O código abaixo lê a tabela no html da página do rottentomatoes.com, extrai, limpa e organiza os dados em um tibble (que é um subtipo de data.frame).
+Johnny Depp, ou John Christopher Depp II, é um dos maiores astros do cinema dos últimos tempos. Um dos melhores atores em atividade, o versátil Depp tem como característica trazer traços marcantes de sua personalidade para os seus personagens.
 
-```{r}
+
+```{r message=FALSE, echo=FALSE, warning=FALSE}
 from_page <- read_html("https://www.rottentomatoes.com/celebrity/johnny_depp") %>% 
     html_node("#filmographyTbl") %>% # A sintaxe da expressão é de um seletor à lá JQuery: https://rdrr.io/cran/rvest/man/html_nodes.html 
     html_table(fill=TRUE) %>% # Faz parse
@@ -36,45 +38,60 @@ filmes = from_page %>%
     filter(`BOX OFFICE` != 'NA')
 ```
 
-### A intuição
+## Descrevendo as variáveis
 
-Uma forma de descrever estrutura nos dados é percebendo grupos de observações mais semelhantes entre si que com o restante dos dados. Agrupamentos.
+### Classificação dos Filmes
 
-Por exemplo, observando as avaliações dos filmes:
+No gráfico abaixo temos uma visão da classificação dos filmes de Johnny Depp, segundo os dados do Rotten Tomatoes: 
 
-```{r}
-filmes %>% 
-    ggplot(aes(x = "Filmes", y = RATING)) + 
-    geom_jitter(width = .01, height = 0, size = 2, alpha = .6)
-
-filmes %>% 
+```{r fig.width=4, fig.height=2, message=FALSE, echo=FALSE, warning=FALSE}
+p = filmes %>% 
     ggplot(aes(x = RATING)) + 
-    geom_histogram(bins = 16) + 
-    geom_rug()
+    geom_histogram(aes(text = paste("Filme:", TITLE, "<br>", "Classificação:", RATING)),
+                   bins = 16) + 
+    scale_x_continuous(breaks=seq(0, 100, 10))+
+    labs(title = "Frequência da Classificação dos Filmes de Johnny Depp", 
+         x = "Classificação", 
+         y = "Frequência")
+
+ggplotly(p, tooltip = "text")
 ```
 
-Para a renda do filme, observar uma escala linear ou logarítmica levam a conclusões diferentes.
+Tendo em vista apenas a classificação... 
 
+### Bilheteria dos Filmes
 
-```{r}
-filmes %>% 
-    ggplot(aes(x = "Filmes", y = `BOX OFFICE`)) + 
-    geom_jitter(width = .02, height = 0, size = 2, alpha = .6)  
-    
-filmes %>% 
-    ggplot(aes(x = "Filmes", y = `BOX OFFICE`)) + 
-    geom_jitter(width = .02, height = 0, size = 2, alpha = .6) + 
-    scale_y_log10()
+Para a renda dos filmes, observar uma escala linear ou logarítmica levam a conclusões diferentes.
 
-filmes %>% 
+```{r fig.width=4, fig.height=2, message=FALSE, echo=FALSE, warning=FALSE}
+p_box_office = filmes %>% 
     ggplot(aes(x = `BOX OFFICE`)) + 
-    geom_histogram(bins = 20) + 
-    geom_rug()
+    geom_histogram(aes(text = paste("Filme:", TITLE, "<br>", "Bilheteria:", `BOX OFFICE`)),
+                   bins = 20) + 
+    labs(title = "Frequência de Billheteria dos Filmes de Johnny Depp", 
+         x = "Bilheteria", 
+         y = "Frequência")
 
-filmes %>% 
-    ggplot(aes(x = `BOX OFFICE`)) + 
-    geom_histogram(bins = 20) + 
-    scale_x_log10() + 
-    geom_rug()
+ggplotly(p_box_office, tooltip = "text")
+
+p_box_office_log = p_box_office + scale_x_log10()
+
+ggplotly(p_box_office_log, tooltip = "text")
 ```
+
+### Duas dimensões
+
+```{r fig.width=4, fig.height=2, message=FALSE, echo=FALSE, warning=FALSE}
+p_duas_dimensoes = filmes %>% 
+    ggplot(aes(x = RATING, y = `BOX OFFICE`, label = TITLE)) + 
+    geom_point(aes(text = paste("Filme: ", TITLE, 
+                                "<br>", "Classificação: ", RATING, 
+                                "<br>", "Bilheteria: ", `BOX OFFICE`))) +
+    labs(title = "Duas dimensões", 
+         x = "Classificação", 
+         y = "Bilheteria")
+
+ggplotly(p_duas_dimensoes, tooltip = "text")
+```
+
 
