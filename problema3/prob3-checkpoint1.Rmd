@@ -4,10 +4,14 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
 ```
 
-```{r message=FALSE, echo=FALSE, warning=FALSE}
+```{r message=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
 library(tidyverse, warn.conflicts = F)
 library(rvest)
 library(plotly)
@@ -18,13 +22,13 @@ source("plota_solucoes_hclust.R")
 ```
 
 
-## Filmes de Johnny Depp
+## Filmes de Angelina Jolie
 
-Johnny Depp, ou John Christopher Depp II, é um dos maiores astros do cinema dos últimos tempos. Um dos melhores atores em atividade, o versátil Depp tem como característica trazer traços marcantes de sua personalidade para os seus personagens.
+Vamos investigar se existem grupos de filmes da atriz Angelina Jolie que possuem comportamentos comuns. Para isso, vamos levar em consideração o sucesso de público (bilheteria) e a crítica (avaliações), através dos dados cedidos pelo site Rotten Tomatoes.
 
 
-```{r message=FALSE, echo=FALSE, warning=FALSE}
-from_page <- read_html("https://www.rottentomatoes.com/celebrity/johnny_depp") %>% 
+```{r message=FALSE, echo=TRUE, message=FALSE, warning=FALSE}
+from_page <- read_html("https://www.rottentomatoes.com/celebrity/angelina_jolie") %>% 
     html_node("#filmographyTbl") %>% # A sintaxe da expressão é de um seletor à lá JQuery: https://rdrr.io/cran/rvest/man/html_nodes.html 
     html_table(fill=TRUE) %>% # Faz parse
     as.tibble()
@@ -38,60 +42,103 @@ filmes = from_page %>%
     filter(`BOX OFFICE` != 'NA')
 ```
 
-## Descrevendo as variáveis
 
-### Classificação dos Filmes
+Inicialmente, vamos observar as variáveis separadamente para verificar como os filmes se comportam.
 
-No gráfico abaixo temos uma visão da classificação dos filmes de Johnny Depp, segundo os dados do Rotten Tomatoes: 
+### Avaliação dos Filmes
 
-```{r fig.width=4, fig.height=2, message=FALSE, echo=FALSE, warning=FALSE}
+No gráfico abaixo temos uma visão da avaliação dos filmes de Angelian Jolie, segundo os dados do Rotten Tomatoes: 
+
+```{r fig.width=4, echo=TRUE, fig.height=2, message=FALSE, warning=FALSE}
 p = filmes %>% 
     ggplot(aes(x = RATING)) + 
-    geom_histogram(aes(text = paste("Filme:", TITLE, "<br>", "Classificação:", RATING)),
+    geom_histogram(aes(text = paste("Filme:", TITLE, "<br>", "Avaliação:", RATING)),
                    bins = 16) + 
     scale_x_continuous(breaks=seq(0, 100, 10))+
-    labs(title = "Frequência da Classificação dos Filmes de Johnny Depp", 
-         x = "Classificação", 
+    labs(title = "Frequência da Avaliação dos Filmes de Angelina Jolie", 
+         x = "Avaliação", 
          y = "Frequência")
 
 ggplotly(p, tooltip = "text")
 ```
 
-Tendo em vista apenas a classificação... 
-
 ### Bilheteria dos Filmes
 
-Para a renda dos filmes, observar uma escala linear ou logarítmica levam a conclusões diferentes.
+No gráfico abaixo temos uma visão da bilheteria dos filmes de Angelian Jolie, segundo os dados do Rotten Tomatoes: 
 
-```{r fig.width=4, fig.height=2, message=FALSE, echo=FALSE, warning=FALSE}
+```{r fig.width=4, echo=TRUE, fig.height=2, message=FALSE, warning=FALSE}
 p_box_office = filmes %>% 
     ggplot(aes(x = `BOX OFFICE`)) + 
     geom_histogram(aes(text = paste("Filme:", TITLE, "<br>", "Bilheteria:", `BOX OFFICE`)),
                    bins = 20) + 
-    labs(title = "Frequência de Billheteria dos Filmes de Johnny Depp", 
+    scale_x_log10() + 
+    labs(title = "Frequência de Billheteria dos Filmes de Angelina Jolie", 
          x = "Bilheteria", 
          y = "Frequência")
 
 ggplotly(p_box_office, tooltip = "text")
 
-p_box_office_log = p_box_office + scale_x_log10()
-
-ggplotly(p_box_office_log, tooltip = "text")
 ```
 
-### Duas dimensões
+### Agrupamento com duas dimensões
 
-```{r fig.width=4, fig.height=2, message=FALSE, echo=FALSE, warning=FALSE}
+Vamos insvestigar como os filmes de Angelina Jolie se comportam ao agruparmos as duas dimensões, avaliação e bilheteria.
+
+```{r fig.width=4, echo=TRUE, fig.height=2, message=FALSE, warning=FALSE}
 p_duas_dimensoes = filmes %>% 
     ggplot(aes(x = RATING, y = `BOX OFFICE`, label = TITLE)) + 
     geom_point(aes(text = paste("Filme: ", TITLE, 
-                                "<br>", "Classificação: ", RATING, 
+                                "<br>", "Avaliação: ", RATING, 
                                 "<br>", "Bilheteria: ", `BOX OFFICE`))) +
-    labs(title = "Duas dimensões", 
-         x = "Classificação", 
+    scale_y_log10() +
+    labs(title = "Bilheteria x Avaliação", 
+         x = "Avaliação", 
          y = "Bilheteria")
 
 ggplotly(p_duas_dimensoes, tooltip = "text")
 ```
+
+Abaixo podemos observar possíveis grupos para os filmes de Angelina Jolie:  
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+agrupamento_h_2d = filmes %>% 
+    column_to_rownames("TITLE") %>%
+    select(RATING, `BOX OFFICE`) %>% 
+    mutate(`BOX OFFICE` = log10(`BOX OFFICE`)) %>% 
+    mutate_all(funs(scale)) %>% 
+    dist(method = "euclidean") %>% 
+    hclust(method = "centroid")
+
+filmes2 = filmes %>% mutate(`BOX OFFICE` = log10(`BOX OFFICE`))
+plota_hclusts_2d(agrupamento_h_2d, 
+                 filmes2, 
+                 c("RATING", "`BOX OFFICE`"), 
+                 linkage_method = "ward.D", ks = 1:6) + scale_y_log10()
+```
+
+Ao observar os gráficos acima resolvi escolher 3 grupos, pois percebo que a partir de 4 grupos a diferença entre os grupos adicionais não trazem distinções muito significativas.  
+
+```{r}
+plota_hclusts_2d(agrupamento_h_2d, 
+                 filmes2, 
+                 c("RATING", "`BOX OFFICE`"), 
+                 linkage_method = "ward.D", ks = 3) + scale_y_log10()
+```
+
+###Tipos de Filme de Angelina Jolie
+
+**Grupo 1: Kung Fu Panda** 
+
+Nesse grupo podemos observar que os filmes possuem altas avaliações e valor de bilheteria acima da média. Resolvi nomear o grupo como Kung Fu Panda porque as três melhores avaliações dentre todos os filmes são Kung Fu Panda, Kung Fu Panda 2 e Kung Fu Panda 3, além de que esses possuem excelentes valores de bilheteria. Neste grupo também se encontram grandes sucessos que são muito comentados até hoje, que são: Mr. & Mrs. Smith (Sr. & Sra. Smith) e Maleficent (Malévola), onde a atriz destacou-se de maneira única em seus papéis. 
+
+**Grupo 2: Atriz sim, diretora... talvez** 
+
+O que chamou atenção nesse terceiro grupo foi que os dois únicos filmes dele: By The Sea (À Beira Mar) e In The Land of Blood and Honey (Na Terra de Amor e Ódio), tiveram direção de Angelina Jolie, e são os filmes que possuem maior insucesso de bilheteria dentre todos os filmes da atriz. Daí vem o nome desse grupo "Atriz sim, diretora... talvez". Ah, mas vale destacar aqui que o filme Unbroken (Invencível), também dirigido pela atriz está no grupo 1, ou seja, nesse caso ele é uma exceção, rsrs.
+
+**Grupo 3: Altas bilheterias x Baixa avaliações** 
+
+Esse grupo possui filmes com altos valores de bilheteria, porém com avaliações abaixo de 40, o que nos faz acreditar que os críticos pegaram pesado em suas avaliações. Um exemplo de filme muito conhecido desse grupo é "Lara Croft: Tomb Raider", baseado na série de videogame Tomb Raider, a interpretação de Angelina Jolie como a heroína dos jogos eletrônicos (Lara Croft) fez a atriz alcançar reconhecimento internacional, estabelecendo-se assim entre as principais atrizes de Hollywood. Outro filme desse grupo que merece destaque é "Changeling" (A Troca), o qual rendeu uma indicação ao Oscar de Melhor Atriz para Jolie.
+
+
 
 
