@@ -1,0 +1,84 @@
+---
+title: 'Prob 3, CP2: Agrupamento de mais dados em mais dimensões'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+	message = FALSE,
+	warning = FALSE)
+```
+
+```{r message=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
+
+require(GGally, quietly = TRUE)
+require(reshape2, quietly = TRUE)
+require(tidyverse, quietly = TRUE, warn.conflicts = FALSE)
+
+library(ggfortify)
+library(cluster)
+library(ggdendro)
+library(broom)
+library(plotly)
+library(readr)
+
+theme_set(theme_bw())
+
+```
+
+```{r}
+personagens = read_csv(file = "./dados/character_list5.csv")
+personagens = personagens %>%
+  filter(age != 'NULL') %>% 
+  mutate(age = as.numeric(age))
+
+filmes = read.csv(file = "./dados/meta_data7.csv")
+filmes = filmes %>%
+  filter(gross != 'NA', gross > 0)
+
+filmes_personagens = merge(filmes, personagens, by="script_id")
+
+dados = filmes_personagens %>%
+  group_by(script_id, imdb_id, title, year, gross) %>%
+  summarise(idade_mediana = median(age), palavras_mediana = median(words))
+
+duplicados = dados %>%
+  group_by(title) %>% filter(row_number() > 1)
+
+dados = dados %>%
+  filter(!(title %in% duplicados$title))
+
+dados = dados %>%
+  subset(select = -c(script_id,imdb_id))
+
+dw = dados
+
+summary(dw)
+
+dw %>%
+    select(-title) %>%
+    ggpairs()
+
+```
+
+```{r}
+dw2 <- dw %>% 
+    mutate_each(funs(log), 2:5)
+
+dw2 %>% 
+    select(-title) %>% 
+    ggpairs()
+
+summary(select(dw2, -title))
+
+dw2.scaled = dw2 %>% 
+  mutate_each(funs(as.vector(scale(.))), 2:5)
+
+summary(dw2.scaled)
+
+dw2.scaled %>% 
+    select(-title) %>% 
+    ggpairs()
+```
+
