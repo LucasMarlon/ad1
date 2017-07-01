@@ -27,6 +27,16 @@ theme_set(theme_bw())
 
 ```
 
+Vamos investigar a existência de tipos de filmes quanto a idade dos personagens e a quantidade de palavras que eles falam, para cada gênero de personagem (femino e masculino). Será que existem grupos que definem comportamentos comuns para os filmes analisados? Por exemplo: será que mulheres mais velhas falam mais que as mulheres mais novas? Ou será que os homens falam mais que as mulheres? Essas são apenas algumas interrogações que nos vem a mente e que podem surgir como resultado de grupos de filmes. 
+
+##Dimensões escolhidas para análise 
+
+Antes de escolher as dimensões foi necessário realizar um merge dos dados e filtrar alguns dados que continham campos nulos ou vazios, como a idade dos personagens. 
+
+Foram escolhidas quatro variáveis numéricas para realizar a análise, que foram calculadas a partir do conjunto de dados. São elas: mediana da idade de personagens do sexo feminino no filme, mediana de palavras dos personagens do sexo feminino no filme, mediana da idade de personagens do sexo masculino no filme, mediana de palavras dos personagens do sexo masculino no filme. 
+
+O conjunto de dados submetido a análise contém, para cada filme, uma observação com valores para cada variável mencionada acima.
+
 ```{r}
 personagens = read_csv(file = "./dados/character_list5.csv")
 personagens = personagens %>%
@@ -39,46 +49,198 @@ filmes = filmes %>%
 
 filmes_personagens = merge(filmes, personagens, by="script_id")
 
-dados = filmes_personagens %>%
+mulheres = filmes_personagens %>%
+  filter(gender == 'f') %>%
   group_by(script_id, imdb_id, title, year, gross) %>%
-  summarise(idade_mediana = median(age), palavras_mediana = median(words))
+  summarise(age_f=median(age), words_f=median(words)) %>%
+  filter(age_f > 1)
 
+homens = filmes_personagens %>%
+  filter(gender == 'm') %>%
+  group_by(script_id, imdb_id, title, year, gross) %>%
+  summarise(age_m=median(age), words_m=median(words)) %>%
+  filter(age_m > 1)
+
+dados = merge(mulheres, homens, 
+                           by=c('script_id','imdb_id','title','year','gross'))
 duplicados = dados %>%
   group_by(title) %>% filter(row_number() > 1)
 
-dados = dados %>%
+dados = dados %>% 
   filter(!(title %in% duplicados$title))
-
+  
 dados = dados %>%
-  subset(select = -c(script_id,imdb_id))
-
-dw = dados
-
-summary(dw)
-
-dw %>%
-    select(-title) %>%
-    ggpairs()
+  subset(select = -c(script_id,imdb_id,year,gross))
 
 ```
 
+##Distribuição dos dados
+
+Vamos observar o gráfico abaixo e tentar analisar como se comporta a distribuição de cada dimensão que escolhemos.
+
 ```{r}
+dw = dados
+
+dw %>% 
+  select(-title) %>% 
+  ggpairs(columnLabels = c("Idade mulheres",
+                           "Palavras mulheres",
+                           "Idade homens",
+                           "Palavras homens"),
+          title = "Distribuição e correlação das dimensões")+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Podemos observar a distribuição de cada uma das dimensões submetidas a análise na diagonal principal dos gráficos acima. 
+
+Ligeraimente já conseguimos observar um viesamento dos dados a esquerda, em relação a dimensão mediana de palavras dos personagens, para ambos os sexos. Isto nos impede ver de uma forma melhor a magnitude dos valores, pois os mesmos se concentram a esquerda do gráfico. 
+
+A respeito da correlação não conseguimos observar nenhuma correlação forte negativa ou positiva entre as dimensões analisadas.
+
+##Distribuição dos dados (log)
+
+É aconselhável observar a distruibuição de cada uma das dimensões na escala logarítmica para observar melhor a magnitude dos valores que se enviesam ou se concentram a esquerda do gráfico, que observamos anteriormente. 
+
+```{r}
+# Escala de log 
 dw2 <- dw %>% 
     mutate_each(funs(log), 2:5)
 
 dw2 %>% 
     select(-title) %>% 
-    ggpairs()
+    ggpairs(columnLabels = c("Idade mulheres",
+                           "Palavras mulheres",
+                           "Idade homens",
+                           "Palavras homens"),
+          title = "Distribuição e correlação das dimensões")+
+  theme(plot.title = element_text(hjust = 0.5))
+```
 
-summary(select(dw2, -title))
-
+```{r}
 dw2.scaled = dw2 %>% 
   mutate_each(funs(as.vector(scale(.))), 2:5)
 
-summary(dw2.scaled)
-
 dw2.scaled %>% 
     select(-title) %>% 
-    ggpairs()
+    ggpairs()+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+# Agrupamento multidimensional utilizado k-means 
+
+## O valor de k 
+
+Para realizar o agrupamento, antes precisamos escolher um bom valor para k, onde k indica basicamente o número de grupos que iremos identificar no conjunto de dados. Uma medida muito usada no k-means é comparar a distância (quadrática) entre o centro dos clusters e o centro dos dados com a distância (quadrática) entre os pontos todos nos dados e o centro dos dados. Quando essa medida parar de crescer, significa que não vale à pena aumentar o k.
+
+```{r}
+dists = dw2.scaled %>%
+      column_to_rownames("title") %>% 
+    dist(method = "euclidean")
+
+hc = hclust(dists, method = "ward.D")
+
+n_clusters = 4
+
+dw2 <- dw2 %>% 
+    mutate(cluster = hc %>% 
+               cutree(k = n_clusters) %>% 
+               as.character())
+
+dw2.scaled <- dw2.scaled %>% 
+    mutate(cluster = hc %>% 
+               cutree(k = n_clusters) %>% 
+               as.character())
+
+dw2.long = melt(dw2.scaled, id.vars = c("title", "cluster"))
+
+dw2.scaled = dw2.scaled %>% 
+    select(-cluster) # Remove o cluster adicionado antes lá em cima via hclust
+
+set.seed(123)
+explorando_k = tibble(k = 1:15) %>% 
+    group_by(k) %>% 
+    do(
+        kmeans(select(dw2.scaled, -title), 
+               centers = .$k, 
+               nstart = 20) %>% glance()
+    )
+
+explorando_k %>% 
+    ggplot(aes(x = k, y = betweenss / totss)) + 
+    geom_line() + 
+    geom_point()
+```
+
+Ao observar o gráfico acima percebemos que o melhor valor de k para o nosso caso seria 4, já que apartir de 4 a medida que mencionamos acima começa a parar de crescer.
+
+
+#Agrupando os dados em 4 grupos
+
+```{r}
+# O agrupamento de fato:
+km = dw2.scaled %>% 
+    select(-title) %>% 
+    kmeans(centers = n_clusters, nstart = 20)
+
+# O df em formato longo, para visualização 
+dw2.scaled.km.long = km %>% 
+    augment(dw2.scaled) %>% # Adiciona o resultado de km 
+                            # aos dados originais dw2.scaled em 
+                            # uma variável chamada .cluster
+    gather(key = "variável", 
+           value = "valor", 
+           -title, -.cluster) # = move para long todas as 
+                                            # variávies menos repository_language 
+                                            # e .cluster
+dw2.scaled.km.long %>% 
+    ggplot(aes(x = `variável`, y = valor, group = title, colour = .cluster)) + 
+    geom_line(alpha = .5) + 
+    facet_wrap(~ .cluster) +
+    xlab("Variável") + 
+    ylab("Valor") +
+    ggtitle("Gráfico de coordenadas paralelas") +
+    theme(plot.title = element_text(hjust = 0.5))
+
+
+dists = dw2.scaled %>% 
+    select(-title) %>% 
+    dist() 
+```
+
+Observando o gráfico acima e olhando a direção em que as linhas dos filmes cruzam e tocam cada uma das variáveis ou coordenadas podemos observar grupos que caracterizam os filmes que ali cabem.
+
+##Descrição e interpretação dos grupos 
+
+Após observar e analisar os agrupamentos do gráfico de coordenadas paralelas, podemos interpretá-los da seguinte forma:
+
+O grupo 1 é caracterizado por conter a maior parte dos personagens com idades abaixo da média, para ambos os sexos. Já com relação a quantidade de palavras ditas não percebe-se uma diferença muito significatica. Poderíamos nomear esse grupo como: **"Os novinhos"**.
+
+O grupo 2 é caracterizado por conter personagens com idades bem variadas, para ambos os sexos. Já com relação a quantidade de palavras ditas percebe-se que os homens falam mais que as mulheres. Poderíamos nomear esse grupo como: **"Homens tagarelas"**.
+
+O grupo 3 é caracterizado por conter a maior parte dos personagens do sexo feminino com idades abaixo da média. Já com relação a quantidade de palavras ditas percebe-se que as mulheres falam mais que os homens, o oposto do grupo anterior. Poderíamos nomear esse grupo como: **"As novinhas tagarelas"**.
+
+O grupo 4 é caracterizado por conter a maior parte dos personagens do sexo feminino com idades acima da média. Já com relação a quantidade de palavras ditas percebe-se que as mulheres falam um pouco menos que os homens. Poderíamos nomear esse grupo como: **"Mulheres 'maduras' falam menos"**.
+
+Por fim podemos observar como fica a disposição de todos os gráficos de coordenadas paralelas para todos os grupos um sobre o outro.
+
+```{r}
+p <- km %>% 
+    augment(dw2.scaled) %>%
+    plot_ly(type = 'parcoords',
+            line = list(color = ~.cluster, 
+                        showScale = TRUE),
+            dimensions = list(
+                list(range = c(-3, 3),
+                     label = 'Idade mulheres', values = ~age_f),
+                list(range = c(-3, 3),
+                     label = 'Palavras mulheres', values = ~words_f),
+                list(range = c(-6, 3),
+                     label = 'Idade homens', values = ~age_m),
+                list(range = c(-2, 3),
+                     label = 'Palavras homens', values = ~words_m)
+            )
+    )
+p
 ```
 
