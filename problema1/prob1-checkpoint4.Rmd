@@ -116,36 +116,36 @@ A segunda pergunta que escolhi foi: **Existem repercussões de que os fãs de Ho
 
 Há poucos meses comecei a assistir a série *How I Met Your Mother* (HIMYM), e todos as pessoas que conheço que já terminaram de assistir a última temporada (9) disseram que talvez eu não fosse gostar, alguns chegaram a afirmar que eu iria amar ou odiar o grande desfecho. Desde então eu procuro tempo para chegar a tão esperada nona temporada, mas ainda não cheguei, rsrs... Enfim, foi por isso que pensei nessa pergunta, a qual achei um questionamento interessante e vou tentar entender o que aconteceu através do gráfico abaixo.
 
-O gráfico mostra a classificação do usuário durante toda a nona temporada. Podemos observar que no segundo episódio os dados já nos mostram uma pequena queda da classificação do usuário, mas é lá no sétimo episódio que aparece a pior classificação. Três episódios depois podemos ver a melhor classificação da temporada, porém depois volta a cair, depois sobe novamente e assim continua oscilando até o final da temporada, onde observamos que pelo menos pela classificação do usuário dada pela IMDB é um bom fim de temporada, rsrs. Talvez nem todos tenham ficados insatisfeitos com o desfecho da nona temporada de HIMYM. Acredito que vale a pena assistir até o fim!  
-
 ```{r}
 series %>%  
-  filter(series_name == "How I Met Your Mother", season == 1) %>% 
+  filter(series_name == "How I Met Your Mother", season == 9) %>% 
   ggplot(aes(x = season_ep, y = UserRating)) + 
   geom_line() + 
-  geom_point() +
-  scale_x_continuous(breaks=seq(1, 23, 1))+
+  geom_point(color = "blue", size = 2) +
+  scale_x_continuous(breaks=seq(1, 25, 1))+
   labs(title = "Classificação do usuário ao longo da nona temporada de HIMYM", x = "Episódio", y = "Classificação do usuário")
 ```
+
+No gráfico acima, podemos observar que a partir do segundo episódio os dados já nos mostram uma pequena queda da classificação dos usuários, mas é lá no décimo primeiro episódio que aparece uma das piores classificações da temporada. Nos dois próximos episódios observamos uma melhora na classificação, porém depois volta a cair, depois sobe novamente e assim continua oscilando até o final da temporada, onde no último episódio da temporada observamos a pior classificação segundo o IMDB. O que nos faz acreditar que meus amigos estejam certos em relação a insatisfação dos fãs de HIMYM. Mesmo assim continuo curioso para assistir a série até o fim!
 
 **Nova pergunta:** Será que a que variável **UserVotes** nos traz uma conclusão diferente em relação a pergunta 2?  
 
 ```{r}
 series %>%  
-  filter(series_name == "How I Met Your Mother", season == 1) %>% 
+  filter(series_name == "How I Met Your Mother", season == 9) %>% 
   ggplot(aes(x = season_ep, y = UserVotes)) + 
   geom_line() + 
-  geom_point() +
-  scale_x_continuous(breaks=seq(1, 23, 1))+
+  geom_point(color = "blue", size = 2) +
+  scale_x_continuous(breaks=seq(1, 25, 1))+
   labs(title = "Número de votos ao longo da nona temporada de HIMYM", x = "Episódio", y = "Número de votos")
 ```
 
-No gráfico acima podemos observar que a partir do segundo episódio os dados já nos mostram uma queda através do número de votos, assim como na avaliação pela classificação do usuário. Porém, diferente do que observamos na resposta da pergunta 2 o sétimo episódio não é o que apresenta a maior queda no número de votos, mas sim os episódios 16, 17, 20 e 21. Aqui também podemos observar uma coisa bem interessante, no último episódio o número de votos volta a subir, porém não parece subir tanto quanto a classificação do usuário subiu no gráfico que analisamos para reponder a pergunta 2. 
+No gráfico acima podemos observar que no episódio 11 os dados já nos mostram uma alta no número de votos. Essa alta volta a acontecer nos episódios 14 e 16, depois só observamos novamente uma alta após o episódio 22. Aqui também podemos observar uma coisa bem interessante, o número de votos subiu bastante nos episódios em que as avaliações dos usuários assumiram os valores de pico, tanto para as altas avaliações quanto para as baixas. 
 
 ```{r}
 series %>% 
   group_by(series_name) %>%
-  filter(series_name == "How I Met Your Mother", season == 1) %>% 
+  filter(series_name == "How I Met Your Mother", season == 9) %>% 
   summarise(correlacao_linear = cor(UserVotes, UserRating, 
                                       method = "pearson"), 
             correlacao_kendall = cor(UserVotes, UserRating, 
