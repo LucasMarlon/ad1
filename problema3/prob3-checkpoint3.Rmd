@@ -1,0 +1,219 @@
+---
+title: "Problema 3 - Checkpoint 3"
+output: html_document
+---
+
+```{r setup, include=FALSE, echo=FALSE, message = FALSE, warning = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r load_code, echo=FALSE, message = FALSE, warning = FALSE}
+require(GGally, quietly = TRUE)
+require(reshape2, quietly = TRUE)
+require(tidyverse, quietly = TRUE, warn.conflicts = FALSE)
+
+library(ggfortify)
+library(cluster)
+library(ggdendro)
+library(broom)
+library(plotly)
+library(readr)
+library(magrittr)
+
+theme_set(theme_bw())
+```
+
+Vamos investigar a existência de tipos de filmes quanto a idade dos personagens e a quantidade de palavras que eles falam, para cada gênero de personagem (femino e masculino). Será que existem grupos que definem comportamentos comuns para os filmes analisados? Por exemplo: será que mulheres mais velhas falam mais que as mulheres mais novas? Ou será que os homens falam mais que as mulheres? Essas são apenas algumas interrogações que nos vem a mente e que podem surgir como resultado de grupos de filmes. 
+
+```{r, echo=FALSE, message = FALSE, warning = FALSE}
+personagens = read_csv(file = "./dados/character_list5.csv")
+personagens = personagens %>%
+  filter(age != 'NULL') %>% 
+  mutate(age = as.numeric(age))
+
+filmes = read.csv(file = "./dados/meta_data7.csv")
+filmes = filmes %>%
+  filter(gross != 'NA', gross > 0)
+
+filmes_personagens = merge(filmes, personagens, by="script_id")
+
+mulheres = filmes_personagens %>%
+  filter(gender == 'f') %>%
+  group_by(script_id, imdb_id, title, year, gross) %>%
+  summarise(age_f=median(age), words_f=median(words)) %>%
+  filter(age_f > 1)
+
+homens = filmes_personagens %>%
+  filter(gender == 'm') %>%
+  group_by(script_id, imdb_id, title, year, gross) %>%
+  summarise(age_m=median(age), words_m=median(words)) %>%
+  filter(age_m > 1)
+
+dados = merge(mulheres, homens, 
+                           by=c('script_id','imdb_id','title','year','gross'))
+duplicados = dados %>%
+  group_by(title) %>% filter(row_number() > 1)
+
+dados = dados %>% 
+  filter(!(title %in% duplicados$title))
+  
+dados = dados %>%
+  subset(select = -c(script_id,imdb_id,year,gross))
+
+```
+
+##Dimensões escolhidas para análise 
+
+Antes de escolher as dimensões foi necessário realizar um merge dos dados e filtrar alguns dados que continham campos nulos ou vazios, como a idade dos personagens. 
+
+Foram escolhidas quatro variáveis numéricas para realizar a análise, que foram calculadas a partir do conjunto de dados. São elas: **mediana da idade de personagens do sexo feminino no filme (age_f)**, **mediana de palavras dos personagens do sexo feminino no filme (words_f)**, **mediana da idade de personagens do sexo masculino no filme (age_m)**, **mediana de palavras dos personagens do sexo masculino no filme (words_m)**. 
+
+O conjunto de dados submetido a análise contém, para cada filme, uma observação com valores para cada variável mencionada acima.
+
+```{r, echo=FALSE, message = FALSE, warning = FALSE}
+dw = dados
+# Escala de log 
+dw2 <- dw %>% 
+    mutate_each(funs(log), 2:5)
+dw2.scaled = dw2 %>% 
+  mutate_each(funs(as.vector(scale(.))), 2:5)
+
+dists = dw2.scaled %>%
+      column_to_rownames("title") %>% 
+    dist(method = "euclidean")
+
+hc = hclust(dists, method = "ward.D")
+
+n_clusters = 4
+
+dw2 <- dw2 %>% 
+    mutate(cluster = hc %>% 
+               cutree(k = n_clusters) %>% 
+               as.character())
+
+dw2.scaled <- dw2.scaled %>% 
+    mutate(cluster = hc %>% 
+               cutree(k = n_clusters) %>% 
+               as.character())
+
+dw2.long = melt(dw2.scaled, id.vars = c("title", "cluster"))
+
+dw2.scaled = dw2.scaled %>% 
+    select(-cluster) # Remove o cluster adicionado antes lá em cima via hclust
+
+set.seed(123)
+explorando_k = tibble(k = 1:15) %>% 
+    group_by(k) %>% 
+    do(
+        kmeans(select(dw2.scaled, -title), 
+               centers = .$k, 
+               nstart = 20) %>% glance()
+    )
+```
+
+# Agrupamento multidimensional utilizado k-means 
+
+## O valor de k 
+
+Para realizar o agrupamento, antes precisamos escolher um bom valor para k, onde k indica basicamente o número de grupos que iremos identificar no conjunto de dados. Uma medida muito usada no k-means é comparar a distância (quadrática) entre o centro dos clusters e o centro dos dados com a distância (quadrática) entre os pontos todos nos dados e o centro dos dados. Quando essa medida parar de crescer, significa que não vale à pena aumentar o k.
+
+```{r, echo=FALSE, message = FALSE, warning = FALSE}
+explorando_k %>% 
+    ggplot(aes(x = k, y = betweenss / totss)) + 
+    geom_line() + 
+    geom_point()
+```
+
+Ao observar o gráfico acima percebemos que o melhor valor de k para o nosso caso seria 4, já que apartir de 4 a medida que mencionamos acima começa a parar de crescer.
+
+
+#Agrupando os dados em 4 grupos
+
+```{r, echo=FALSE, message = FALSE, warning = FALSE}
+# O agrupamento de fato:
+km = dw2.scaled %>% 
+    select(-title) %>% 
+    kmeans(centers = n_clusters, nstart = 20)
+
+# O df em formato longo, para visualização 
+dw2.scaled.km.long = km %>% 
+    augment(dw2.scaled) %>% # Adiciona o resultado de km 
+                            # aos dados originais dw2.scaled em 
+                            # uma variável chamada .cluster
+    gather(key = "variável", 
+           value = "valor", 
+           -title, -.cluster) # = move para long todas as 
+                                            # variávies menos title 
+                                            # e .cluster
+dw2.scaled.km.long %>% 
+    ggplot(aes(x = `variável`, y = valor, group = title, colour = .cluster)) + 
+    geom_line(alpha = .5) + 
+    facet_wrap(~ .cluster) +
+    xlab("Variável") + 
+    ylab("Valor") +
+    ggtitle("Gráfico de coordenadas paralelas") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Observando o gráfico acima e olhando a direção em que as linhas dos filmes cruzam e tocam cada uma das variáveis ou coordenadas podemos observar grupos que caracterizam os filmes que ali cabem.
+
+# Redução de dimensionalidade usando PCA (Análise de Componentes Principais)
+
+Logo abaixo podemos ver a visualização 2D da redução de dimensionalidade das 4 dimensões mencionadas anteriormente.
+```{r, fig.width=4, echo=FALSE, fig.height=2, message = FALSE, warning = FALSE}
+autoplot(km, data = dw2.scaled, label = TRUE) %>%
+  ggplotly()
+```
+
+## Descrição e interpretação da redução
+
+PC1 e PC2 são as duas variáveis criadas para substituir as 4 variáveis originais de antes da visualização. PC1 e PC2 são úteis se conseguirmos entender a relação delas com as variáveis originais. Na técnica denominada PCA, cada uma dessas novas variáveis é calculada a partir das 4 iniciais.
+
+```{r, fig.width=4, echo=FALSE, fig.height=2, message = FALSE, warning = FALSE}
+autoplot(km, data = dw2.scaled, size = 2, 
+         colour = "grey",
+         loadings = TRUE, loadings.colour = 'blue',
+         loadings.label = TRUE, 
+         loadings.label.size = 3) %>% ggplotly()
+```
+
+Observando o gráfico, words_m e words_f variam quando um ponto está mais à esquerda ou direita no gráfico (direção de PC1), mas não variam muito em função da posição de um ponto no eixo vertical (direção de PC2). Já n_f e n_m estão mais relacionada com PC2, enquanto words_m e words_f praticamente não estão. 
+
+Seguindo a mesma leitura, n_f e n_m variam principalmente na medida que os pontos estão mais acima ou abaixo no gráfico (PC2), mas também em função de quão à esquerda ou direita eles estão.
+
+Outra forma de ver a informação que o gráfico mostra é vendo PC1 e PC2 como duas funções das 4 variáveis originais, vejamos abaixo.
+```{r, fig.width=4, echo=FALSE, fig.height=2, message = FALSE, warning = FALSE}
+pr.out <- prcomp(select(dw2.scaled, -title), scale=TRUE)
+
+tidy(pr.out,"variables") %>% 
+  filter(PC <= 2) %>% 
+  spread(column, value)
+```
+
+Os valores na tabela são os coeficientes, e a leitura é que:
+
+*PC1 = 0.34n_f + 0.51n_m - 0.51words_f − 0.60words_m* e *PC2 = 0.69n_f - 0.50n_m - 0.41words_f + 0.31words_m*.
+
+Em PC1, mudar uma unidade nas 2 primeiras variáveis aumenta PC1 e faz com que um ponto esteja mais à direita no gráfico. Já words_f e words_m têm efeito negativo e de maior efeito por unidade do que as duas primeiras. A unidade aqui é em z-scores: todas as variáveis foram normalizadas com scale antes da redução de dimensionalidade, para que seu efeito ficasse comparável.
+
+Em PC2, mudar uma unidade nas 2 primeiras variáveis aumenta PC2 e faz com que um ponto esteja mais à cima ou abaixo no gráfico.
+
+## Correlação entre as variáveis e os PCs
+
+Podemos perceber que as variáveis são pouco correlacionadas. De certa maneira, isso não significa que elas não tenham informação parecida. As variáveis words_m e words_f são pouco correlacionadas mas as duas são componentes principais para trazer informação para PC1, por isso, PC1 é uma função dessas 2 variáveis. Como n_m e n_f não trazem muita informação para PC1, o método PCA cria PC2 que vai ser representado por estas duas variáveis que são menos correlacionadas com as demais. Da mesma forma, n_f e n_m são pouco correlacionadas mas a união delas trás muita informação para PC2.
+
+## Interpretação dos grupos presentes na visualização
+
+Podemos entender que existem 4 grupos de filmes segundo as 4 variáveis que usamos. 
+
+```{r, fig.width=4, echo=FALSE, fig.height=2, message = FALSE, warning = FALSE}
+ggplotly(autoplot(km, data = dw2.scaled, label = TRUE))
+```
+
+<!-- No grupo 1 (nuvem vermelha) estão os filmes que tem valores no geral parecidos - baixos - de n_f e words_f e - altos - de n_m, mas que variam muito nos valores de words_m e words_f. Em outras palavras os filmes que possuem muitos homens, poucas mulheres e que as mulheres falam em menor quantidade, em análise anterior esse grupo recebeu o nome de **filmes femininos tradicionais**. -->
+
+<!-- No grupo 2 (a nuvem verde) estão os filmes que tem valores no geral parecidos – e altos – de n_f e words_m mas que variam muito nos valores de words_m e words_f que tem. Em outras palavras os filmes que possuem muitas mulheres mas que elas falam menos do que os homens, segundo análise anterior esse grupo recebeu o nome de **filmes masculinos tradicionais**. -->
+
+<!-- No grupo 3 (a nuvem azul) estão os filmes que tem valores no geral bem parecidos com os valores dos filmes do grupo 4. Possui valores - altos - de n_f mas que possuem valores variados de words_f e words_m. Em outras palavras são os filmes em que tanto homens quanto mulheres falam variadamente mas a maior parte dos personagens são mulheres, em outra análise esse grupo recebeu o nome de **filmes feministas modernos**. -->
+
+<!-- No grupo 4 (a nuvem lilás) estão os filmes que tem valores bem parecidos no geral. Possui valores - altos - de n_m e - baixos - de n_f mas posuem valores bem parecidos de words_m e words_f. Em outras palavras são os filmes em que ambos os sexos falam praticamente a mesma quantidade de palavras embora a maior parte dos personagens sejam do sexo masculino, em outra análise esse grupo recebeu o nome de **filmes machistas tradicionais**. -->
