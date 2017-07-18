@@ -157,26 +157,27 @@ dw2.scaled.km.long %>%
 
 Observando o gráfico acima e olhando a direção em que as linhas dos filmes cruzam e tocam cada uma das variáveis ou coordenadas podemos observar grupos que caracterizam os filmes que ali cabem.
 
+# Redução de dimensionalidade usando PCA (Análise de Componentes Principais)
+
+Analisando quanta variância cada PC captura:
+
 ```{r}
 filmes_pca = dw2.scaled %>% 
     column_to_rownames("title") %>% 
     prcomp(scale = FALSE) 
 
-tidy(filmes_pca, "pcs")
-
 tidy(filmes_pca, "pcs") %>% 
     ggplot(aes(x = PC, y = cumulative, label = cumulative)) + 
     geom_line() + 
-    geom_point() + 
+    geom_point(size = 2, color = "blue") + 
     geom_text(vjust = 1, hjust = -.1)
 ```
 
-
-# Redução de dimensionalidade usando PCA (Análise de Componentes Principais)
+No gráfico acima podemos observar que quando reduzimos as quatro variáveis para duas conseguimos capturar 65% da variância dos dados.
 
 Logo abaixo podemos ver a visualização 2D da redução de dimensionalidade das 4 dimensões mencionadas anteriormente.
 ```{r, fig.width=4, echo=FALSE, fig.height=2, message = FALSE, warning = FALSE}
-autoplot(km, data = dw2.scaled, label = TRUE) %>%
+autoplot(km, data = dw2.scaled, size = 1, label = TRUE, label.size = 3.5) %>%
   ggplotly()
 ```
 
@@ -185,16 +186,16 @@ autoplot(km, data = dw2.scaled, label = TRUE) %>%
 PC1 e PC2 são as duas variáveis criadas para substituir as 4 variáveis originais de antes da visualização. PC1 e PC2 são úteis se conseguirmos entender a relação delas com as variáveis originais. Na técnica denominada PCA, cada uma dessas novas variáveis é calculada a partir das 4 iniciais.
 
 ```{r, fig.width=4, echo=FALSE, fig.height=2, message = FALSE, warning = FALSE}
-autoplot(km, data = dw2.scaled, size = 2, 
+autoplot(km, data = dw2.scaled, size = 1, 
          colour = "grey",
          loadings = TRUE, loadings.colour = 'blue',
          loadings.label = TRUE, 
          loadings.label.size = 3) %>% ggplotly()
 ```
 
-Observando o gráfico, words_m e words_f variam quando um ponto está mais à esquerda ou direita no gráfico (direção de PC1), mas não variam muito em função da posição de um ponto no eixo vertical (direção de PC2). Já n_f e n_m estão mais relacionada com PC2, enquanto words_m e words_f praticamente não estão. 
+Observando o gráfico, age_m e age_f variam quando um ponto está mais à direita ou esquerda no gráfico (direção de PC1), mas não variam muito em função da posição de um ponto no eixo vertical (direção de PC2). Já words_f e words_m estão mais relacionada com PC2, enquanto age_m e age_f praticamente não estão. 
 
-Seguindo a mesma leitura, n_f e n_m variam principalmente na medida que os pontos estão mais acima ou abaixo no gráfico (PC2), mas também em função de quão à esquerda ou direita eles estão.
+Seguindo a mesma leitura, words_f e words_m variam principalmente na medida que os pontos estão mais acima ou abaixo no gráfico (PC2), mas também em função de quão à esquerda ou direita eles estão.
 
 Outra forma de ver a informação que o gráfico mostra é vendo PC1 e PC2 como duas funções das 4 variáveis originais, vejamos abaixo.
 ```{r, fig.width=4, echo=FALSE, fig.height=2, message = FALSE, warning = FALSE}
@@ -215,13 +216,20 @@ Em PC2, mudar uma unidade nas 4 variáveis diminui PC2 e faz com que um ponto es
 
 ## Correlação entre as variáveis e os PCs
 
-Podemos perceber que as variáveis são pouco correlacionadas. De certa maneira, isso não significa que elas não tenham informação parecida. As variáveis words_m e words_f são pouco correlacionadas mas as duas são componentes principais para trazer informação para PC1, por isso, PC1 é uma função dessas 2 variáveis. Como n_m e n_f não trazem muita informação para PC1, o método PCA cria PC2 que vai ser representado por estas duas variáveis que são menos correlacionadas com as demais. Da mesma forma, n_f e n_m são pouco correlacionadas mas a união delas trás muita informação para PC2.
+As variáveis age_m e age_f são muito correlacionadas e as duas são componentes principais para trazer informação para PC1, por isso, PC1 é explicado em função dessas 2 variáveis. Como words_m e words_f não trazem muita informação para PC1, o método PCA cria PC2 que vai ser representado por estas duas variáveis que são menos correlacionadas com as demais, porém muito correlacionadas entre si. Da mesma forma,a união words_m e words_f trazem muita informação para PC2.
 
 ## Interpretação dos grupos presentes na visualização
 
 Podemos entender que existem 4 grupos de filmes segundo as 4 variáveis que usamos. 
 
 ```{r, fig.width=4, echo=FALSE, fig.height=2, message = FALSE, warning = FALSE}
-ggplotly(autoplot(km, data = dw2.scaled, label = TRUE))
+ggplotly(autoplot(km, data = dw2.scaled, size = 1, label = TRUE, label.size = 3.5))
 ```
 
+O grupo 1 é caracterizado por conter a maior parte dos personagens com idades abaixo da média, para ambos os sexos. Já com relação a quantidade de palavras ditas não percebe-se uma diferença muito significatica. Poderíamos nomear esse grupo como: **"Os novinhos"**.
+
+O grupo 2 é caracterizado por conter personagens com idades bem variadas, para ambos os sexos. Já com relação a quantidade de palavras ditas percebe-se que os homens falam mais que as mulheres. Poderíamos nomear esse grupo como: **"Homens tagarelas"**.
+
+O grupo 3 é caracterizado por conter a maior parte dos personagens do sexo feminino com idades abaixo da média. Já com relação a quantidade de palavras ditas percebe-se que as mulheres falam mais que os homens, o oposto do grupo anterior. Poderíamos nomear esse grupo como: **"As novinhas tagarelas"**.
+
+O grupo 4 é caracterizado por conter a maior parte dos personagens do sexo feminino com idades acima da média. Já com relação a quantidade de palavras ditas percebe-se que as mulheres falam um pouco menos que os homens. Poderíamos nomear esse grupo como: **"Mulheres 'maduras' falam menos"**.
