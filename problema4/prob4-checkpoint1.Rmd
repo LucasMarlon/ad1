@@ -1,0 +1,70 @@
+---
+title: "Problema 4 - Checkpoint 1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+library(ggplot2)
+library(GGally)
+library(dplyr)
+library(tidyverse)
+library(resample) # <-- Para bootstrap!
+theme_set(theme_bw())
+```
+
+## Dados de commits no github
+
+Neste relatório vamos responder duas perguntas através de uma amostra de dados da atividade global do github. Inicialmente temos que escolher duas linguagens de programação para responder as perguntas, no caso eu escolhi as linguagens **JAVA** e **C**.
+
+```{r message = FALSE, warning = FALSE}
+
+dados = read_csv(file = "./dados/github.csv") 
+  
+dados$date <- paste(dados$month_day, dados$the_month, dados$the_year, sep = "-")
+
+java <- dados %>% 
+  filter(file_extension == 'java')  
+  
+c <- dados %>% 
+  filter(file_extension == 'c')
+
+```
+
+
+### Pergunta 1
+
+Para cada uma delas, há uma diferença significativa na sua popularidade durante a semana e durante o fim de semana? Essa diferença é grande?
+
+```{r message = FALSE, warning = FALSE}
+
+java <- java %>% 
+  mutate(weekday = weekdays(as.Date(date,'%d-%m-%Y')))
+
+java_semana <- java %>% 
+  filter(weekday != 'sábado', weekday != 'domingo')
+
+java_fds <- java %>% 
+  filter(weekday == 'sábado'| weekday == 'domingo')
+
+c <- c %>% 
+  mutate(weekday = weekdays(as.Date(date,'%d-%m-%Y')))
+
+c_semana <- c %>% 
+  filter(weekday != 'sábado', weekday != 'domingo')
+
+c_fds <- c %>% 
+  filter(weekday == 'sábado'| weekday == 'domingo')
+
+```
+
+
+### Pergunta 2
+
+Existe uma diferença significativa entre as duas linguagens na sua variação de popularidade nos finais de semana?
+
+
