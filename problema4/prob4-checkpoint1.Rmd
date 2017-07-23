@@ -9,6 +9,7 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
+library(plotly)
 library(ggplot2)
 library(GGally)
 library(dplyr)
@@ -28,13 +29,63 @@ dados = read_csv(file = "./dados/github.csv")
 dados$date <- paste(dados$month_day, dados$the_month, dados$the_year, sep = "-")
 
 java <- dados %>% 
-  filter(file_extension == 'java')  
+  filter(file_extension == 'java') %>%
+  mutate(weekday = weekdays(as.Date(date,'%d-%m-%Y')))
   
 c <- dados %>% 
-  filter(file_extension == 'c')
+  filter(file_extension == 'c') %>%
+  mutate(weekday = weekdays(as.Date(date,'%d-%m-%Y')))
 
 ```
 
+### JAVA
+
+De modo geral, a linguagem de programação JAVA parece ser bastante popular, tanto no meio acadêmico quanto no ambiente corporativo. No gráfico abaixo vamos oberservar como se comporta os dados da nossa amostra com relação a popularidade dessa linguagem durante todos os dias da semana.
+
+
+```{r fig.width=4, echo=FALSE, fig.height=2, message = FALSE, warning = FALSE}
+
+p = java %>% 
+  ggplot(aes(x = weekday, 
+             y = users)) + 
+  geom_boxplot(outlier.colour = NA) +
+  geom_point(aes(text = paste("Dia da semana:", weekday, "<br>", "Popularidade:", users)),
+             position = position_jitter(width = .2), 
+             alpha = .6, 
+             color = "blue") +
+  labs(title = "Popularidade da linguagem JAVA", 
+         x = "Dia da semana", 
+         y = "Popularidade")
+
+ggplotly(p, tooltip = "text")
+```
+
+  <br/>
+Podemos observar que a popularidade da linguagem JAVA varia, de modo geral, aproximadamente num intervalo de 1100 a 4500 usuários por dia. Onde esses valores costumam ser menores durante os finais de semana. No gráfico acima, ainda podemos verificar a existência de *outliers* em todos os dias, que representam valores com um grande afastamento dos demais valores. 
+
+
+### C
+
+A linguagem de programção C é menos popular que JAVA, como já podíamos imaginar. No gráfico abaixo vamos oberservar como se comporta os dados da nossa amostra com relação a popularidade dessa linguagem durante todos os dias da semana.
+
+```{r fig.width=4, echo=FALSE, fig.height=2, message = FALSE, warning = FALSE}
+p = c %>% 
+  ggplot(aes(x = weekday, 
+             y = users)) + 
+  geom_boxplot(outlier.colour = NA) +
+  geom_point(aes(text = paste("Dia da semana:", weekday, "<br>", "Popularidade:", users)),
+             position = position_jitter(width = .2), 
+             alpha = .6, 
+             color = "blue") +
+  labs(title = "Popularidade da linguagem C", 
+         x = "Dia da semana", 
+         y = "Popularidade")
+
+ggplotly(p, tooltip = "text")
+```
+
+  <br/>
+De modo geral, podemos observar que a popularidade da linguagem de programação C varia num intervalo bem menor que o da linguagem JAVA, aproximadamente num intervalo de 500 a 1900 usuários por dia. Onde esses valores também costumam ser menores durante os finais de semana. No gráfico acima, ainda podemos verificar a existência de *outliers* em todos os dias, exceto nos domingos, que representam valores com um grande afastamento dos demais valores.
 
 ### Pergunta 1
 
@@ -42,17 +93,11 @@ Para cada uma delas, há uma diferença significativa na sua popularidade durant
 
 ```{r message = FALSE, warning = FALSE}
 
-java <- java %>% 
-  mutate(weekday = weekdays(as.Date(date,'%d-%m-%Y')))
-
 java_semana <- java %>% 
   filter(weekday != 'sábado', weekday != 'domingo')
 
 java_fds <- java %>% 
   filter(weekday == 'sábado'| weekday == 'domingo')
-
-c <- c %>% 
-  mutate(weekday = weekdays(as.Date(date,'%d-%m-%Y')))
 
 c_semana <- c %>% 
   filter(weekday != 'sábado', weekday != 'domingo')
