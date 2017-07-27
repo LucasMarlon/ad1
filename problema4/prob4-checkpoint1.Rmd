@@ -15,6 +15,7 @@ library(GGally)
 library(dplyr)
 library(tidyverse)
 library(resample) # <-- Para bootstrap!
+library(boot) 
 theme_set(theme_bw())
 ```
 
@@ -22,7 +23,7 @@ theme_set(theme_bw())
 
 Neste relatório vamos responder duas perguntas através de uma amostra de dados da atividade global do github. Inicialmente temos que escolher duas linguagens de programação para responder as perguntas, no caso eu escolhi as linguagens **JAVA** e **C**.
 
-```{r message = FALSE, warning = FALSE}
+```{r message = FALSE, echo=TRUE, warning=FALSE}
 
 dados = read_csv(file = "./dados/github.csv") 
   
@@ -43,7 +44,7 @@ c <- dados %>%
 De modo geral, a linguagem de programação JAVA parece ser bastante popular, tanto no meio acadêmico quanto no ambiente corporativo. No gráfico abaixo vamos oberservar como se comporta os dados da nossa amostra com relação a popularidade dessa linguagem durante todos os dias da semana.
 
 
-```{r fig.width=4, echo=FALSE, fig.height=2, message = FALSE, warning = FALSE}
+```{r fig.width=4, echo=TRUE, fig.height=2, message=FALSE, warning=FALSE}
 
 p = java %>% 
   ggplot(aes(x = weekday, 
@@ -68,7 +69,7 @@ Podemos observar que a popularidade da linguagem JAVA varia, de modo geral, apro
 
 A linguagem de programção C é menos popular que JAVA, como já podíamos imaginar. No gráfico abaixo vamos oberservar como se comporta os dados da nossa amostra com relação a popularidade dessa linguagem durante todos os dias da semana.
 
-```{r fig.width=4, echo=FALSE, fig.height=2, message = FALSE, warning = FALSE}
+```{r fig.width=4, echo=TRUE, fig.height=2, message=FALSE, warning=FALSE}
 p = c %>% 
   ggplot(aes(x = weekday, 
              y = users)) + 
@@ -89,27 +90,93 @@ De modo geral, podemos observar que a popularidade da linguagem de programação
 
 ### Pergunta 1
 
-Para cada uma delas, há uma diferença significativa na sua popularidade durante a semana e durante o fim de semana? Essa diferença é grande?
+**Para cada uma delas, há uma diferença significativa na sua popularidade durante a semana e durante o fim de semana? Essa diferença é grande?**
+  
+  <br/>
 
-```{r message = FALSE, warning = FALSE}
-
-java_semana <- java %>% 
-  filter(weekday != 'sábado', weekday != 'domingo')
-
-java_fds <- java %>% 
-  filter(weekday == 'sábado'| weekday == 'domingo')
-
-c_semana <- c %>% 
-  filter(weekday != 'sábado', weekday != 'domingo')
-
-c_fds <- c %>% 
-  filter(weekday == 'sábado'| weekday == 'domingo')
-
+```{r, echo=FALSE}
+fun.boot <- function(dados, indices) {
+    d = dados[indices,]
+    fds = d %>% filter(is_fds == TRUE) 
+    median_fds =  median(fds$users)
+    semana = d %>% filter(is_fds == FALSE) 
+    median_semana =  median(semana$users)
+    teta = median_semana / median_fds
+    return(teta)
+}
 ```
 
 
+**Diferença entre a popularidade de usuários durante os dias de semana e nos finais de semana (JAVA)**
+
+```{r message = FALSE, echo=TRUE, warning=FALSE}
+
+java_semana <- java %>% 
+  filter(weekday != 'sábado', weekday != 'domingo') %>%
+  mutate(is_fds = FALSE)
+
+java_fds <- java %>% 
+  filter(weekday == 'sábado'| weekday == 'domingo') %>%
+  mutate(is_fds = TRUE)
+
+java_merge <- rbind(java_semana, java_fds)
+
+res.boot <- boot(data = java_merge, statistic = fun.boot, R = 2000)
+
+boot.ci(boot.out = res.boot, conf = 0.95, type = "bca")
+
+```
+ </br>
+ 
+Ao observar os resultados acima podemos afirmar com 95% de confiança que a diferença das medianas de popularidade entre os dias da semana e os fins de semana para a linguagem Java está no intervalo mostrado acima. Dessa forma, percebemos que a linguagem Java é muito mais utilizada pelos programadores durante a semana do que durante os fins de semana. Podemos considerar essa diferença como alta, visto que as observações diárias de commits de programadores Java normalmente não ultrapassam a faixa de 4.000 usuários por dia. Sendo assim, podemos concluir que essa diferença é relevante e tem essa significância de que com 95% de confiança se encontra no intervalo mostrado acima.
+
+
+**Diferença entre a popularidade de usuários durante os dias de semana e nos finais de semana (C)**
+
+```{r message = FALSE, echo=FALSE, warning=FALSE}
+
+c_semana <- c %>% 
+  filter(weekday != 'sábado', weekday != 'domingo') %>%
+  mutate(is_fds = FALSE)
+
+c_fds <- c %>% 
+  filter(weekday == 'sábado'| weekday == 'domingo') %>%
+  mutate(is_fds = TRUE)
+
+c_merge <- rbind(c_semana, c_fds)
+
+res.boot <- boot(data = c_merge, statistic = fun.boot, R = 2000)
+
+boot.ci(boot.out = res.boot, conf = 0.95, type = "bca")
+
+```
+  <br/>
+Ao observar os resultados acima podemos afirmar com 95% de confiança que a diferença das medianas de popularidade entre os dias da semana e os fins de semana para a linguagem C está no intervalo mostrado acima. Dessa forma, percebemos que a linguagem C também é muito mais utilizada pelos programadores durante a semana do que durante os fins de semana. Também podemos considerar essa diferença como alta, visto que as observações diárias de commits de programadores C normalmente não ultrapassam a faixa de 1.600 usuários por dia. Sendo assim, podemos concluir que essa diferença é relevante e tem essa significância de que com 95% de confiança se encontra no intervalo mostrado acima.
+
 ### Pergunta 2
 
-Existe uma diferença significativa entre as duas linguagens na sua variação de popularidade nos finais de semana?
+**Existe uma diferença significativa entre as duas linguagens na sua variação de popularidade nos finais de semana?** 
 
+  <br/>
+Neste caso, vamos investigar duas amostras diferentes, ou seja, não pareadas. Vamos utilizar a técnica bootstrap e em seguida determinar o intervalo de confiança para a diferença na variação das atividades no github entre os programadores das linguagens Java e C durante os fins de semana.
+  <br/>
+ Para responder essa pergunta vamos utilizar a medida estatística desvio padrão, portanto o que nos interessa é obter o desvio padrão da popularidade de cada uma das linguagens (Java e C) durante o fim de semana.
+
+```{r, echo=TRUE}
+
+b <- bootstrap2(data = (java_fds)$users, 
+               data2 = (c_fds)$users,
+               sd)
+
+b.ci = CI.percentile(b, probs = c(.025, .975))
+
+data.frame(b.ci) %>% 
+  ggplot(aes(x = "Diferença", ymin = X2.5., ymax = X97.5.)) + 
+  geom_errorbar(width = .2) + 
+  geom_hline(yintercept = 0, colour = "darkorange")
+
+```
+  <br/>
+
+Podemos afirmar com 95% de confiança que a diferença do desvio padrão está no intervalo (`r b.ci`). Logo, ainda é possível afirmarmos que a variação da popularidade durante os finais de semana é maior para a linguagem de progamação Java.
 
