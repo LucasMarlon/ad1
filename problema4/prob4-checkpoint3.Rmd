@@ -1,0 +1,46 @@
+---
+title: "Problema 4 - Checkpoint 3"
+author: "Lucas Marlon"
+date: "28 de julho de 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+library(plotly)
+library(ggplot2)
+library(GGally)
+library(dplyr)
+library(tidyverse)
+library(resample) # <-- Para bootstrap!
+library(boot) 
+theme_set(theme_bw())
+```
+
+## Pergunta 1
+
+**1. Considerando os três primeiros meses do ano, será que a linguagem GO apresentou um aumento de popularidade entre 2016 e 2017?**
+
+```{r}
+dados = read_csv(file = "./dados/github.csv") 
+
+dados$date <- paste(dados$month_day, dados$the_month, dados$the_year, sep = "-")
+
+dados_go_2016 <- dados %>% 
+  filter(the_year == 2016, file_extension == 'go')
+
+trimestre_1_2016 <- dados_go_2016  %>%
+  filter(the_month == 1 | the_month == 2 |the_month == 3)
+  
+dados_go_2017 <- dados %>% 
+  filter(the_year == 2017, file_extension == 'go')
+
+trimestre_1_2017 <- dados_go_2017  %>%
+  filter(the_month == 1 | the_month == 2 |the_month == 3)
+
+```
+
