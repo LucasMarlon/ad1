@@ -6,6 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+
 knitr::opts_chunk$set(
 	echo = TRUE,
 	message = FALSE,
@@ -19,28 +20,87 @@ library(tidyverse)
 library(resample) # <-- Para bootstrap!
 library(boot) 
 theme_set(theme_bw())
+
 ```
 
 ## Pergunta 1
 
-**1. Considerando os três primeiros meses do ano, será que a linguagem GO apresentou um aumento de popularidade entre 2016 e 2017?**
+**1. Considerando os três primeiros meses do ano, será que a linguagem Python apresentou um aumento de popularidade entre 2016 e 2017?**
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 dados = read_csv(file = "./dados/github.csv") 
 
 dados$date <- paste(dados$month_day, dados$the_month, dados$the_year, sep = "-")
 
-dados_go_2016 <- dados %>% 
-  filter(the_year == 2016, file_extension == 'go')
+python <- dados %>% 
+  filter(file_extension == 'py')
 
-trimestre_1_2016 <- dados_go_2016  %>%
+python.trimestre1 <- python  %>%
   filter(the_month == 1 | the_month == 2 |the_month == 3)
-  
-dados_go_2017 <- dados %>% 
-  filter(the_year == 2017, file_extension == 'go')
 
-trimestre_1_2017 <- dados_go_2017  %>%
-  filter(the_month == 1 | the_month == 2 |the_month == 3)
+python.2016 <- python.trimestre1  %>%
+  filter(the_year == 2016)
+
+python.2017 <- python.trimestre1  %>%
+  filter(the_year == 2017)
+```
+
+Ao observar o gráfico abaixo percebemos pouca diferença entre os commits de arquivos .py durante os três primeiros meses dos anos 2016 e 2017. De modo geral, a quantidade de commits não parece ter mudado muito compando o mesmo período nos dois anos.
+
+```{r fig.width=4, echo=TRUE, fig.height=2, message=FALSE, warning=FALSE}
+p = python.trimestre1 %>%
+  mutate(the_year = as.character(the_year)) %>%
+  ggplot(aes(x = the_year, y = users)) +
+  geom_jitter(aes(text = paste("Ano:", the_year, "<br>", "Usuários:", users)),
+              width = .1, color = "blue") +
+  labs(title = "Atividade de usuários Python no 1º trimestre", x = "Ano", y = "Usuários") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplotly(p, tooltip = "text")
+```
+
+Entretanto, só observar essa visualização não nos traz confiança para reponder essa pergunta, uma vez que no gráfico acima estamos observando apenas uma amostra e não o total. Vamos usar a técnica bootstrap para coletar informações da amostra de forma que possamos determinar um intervalo de confiança do valor da diferença da atividade de programadores Python no primeiro trimestre dos anos 2016 e 2017.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+#Diferença
+b <- bootstrap2(data = (python.2016)$users, 
+               data2 = (python.2017)$users,
+               median)
+
+b.ci = CI.percentile(b, probs = c(.025, .975))
+
+data.frame(b.ci) %>% 
+  ggplot(aes(x = "Diferença", ymin = X2.5., ymax = X97.5.)) + 
+  geom_errorbar(width = .2) + 
+  geom_hline(yintercept = 0, colour = "darkorange")
+```
+
+Podemos afirmar com 95% de confiança que a diferença da mediana para a popularidade da liguagem Python durante os três primeiros meses dos anos de 2016 e 2017 está no intervalo (`r b.ci`). Logo, ainda é possível afirmar que a popularidade da linguagem Python foi maior em 2016 do que em 2017, durante o primeiro trimestre do ano.
+
+### Pergunta derivada 1
+
+**Será que existe uma diferença significativa na variação da popularidade da linguagem Python durante o primeiro trimestre de 2016 e 2017?**
+
+Para responder essa pergunta vamos utilizar a medida estatística **desvio padrão**, portanto o que nos interessa é obter o desvio padrão da popularidade da linguagem Python durante o primeiro trimestre dos anos 2016 e 2017.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
+b <- bootstrap2(data = (python.2016)$users, 
+               data2 = (python.2017)$users,
+               sd)
+
+b.ci = CI.percentile(b, probs = c(.025, .975))
+
+data.frame(b.ci) %>% 
+  ggplot(aes(x = "Diferença", ymin = X2.5., ymax = X97.5.)) + 
+  geom_errorbar(width = .2) + 
+  geom_hline(yintercept = 0, colour = "darkorange")
 
 ```
+  <br/>
+Podemos afirmar com 95% de confiança que a diferença do desvio padrão está no intervalo (`r b.ci`). Logo, ainda é possível afirmarmos que a variação da popularidade durante o primeiro trimestre no ano 2016 foi maior para a linguagem de progamação Python com relação ao mesmo período no ano 2017.
+
+## Pergunta 2
+
+**Há diferença significativa na produtividade dos desenvolvedores entre o sábado e o domingo?**
 
