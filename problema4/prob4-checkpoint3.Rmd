@@ -1,7 +1,5 @@
 ---
 title: "Problema 4 - Checkpoint 3"
-author: "Lucas Marlon"
-date: "28 de julho de 2017"
 output: html_document
 ---
 
@@ -26,6 +24,8 @@ theme_set(theme_bw())
 ## Pergunta 1
 
 **1. Considerando os três primeiros meses do ano, será que a linguagem Python apresentou um aumento de popularidade entre 2016 e 2017?**
+
+Recentemente, segundo o IEEE, a linguagem de programação Python saltou para o 1º lugar entre as linguagens de programação mais populares, como podemos ver [aqui](http://spectrum.ieee.org/computing/software/the-2017-top-programming-languages). Será que vamos observar esse aumento de popularidade durante o primeiro trimestre de 2016 para 2017? 
 
 ```{r message=FALSE, warning=FALSE}
 dados = read_csv(file = "./dados/github.csv") 
@@ -52,13 +52,13 @@ p = python.trimestre1 %>%
   mutate(the_year = as.character(the_year)) %>%
   ggplot(aes(x = the_year, y = users)) +
   geom_jitter(aes(text = paste("Ano:", the_year, "<br>", "Usuários:", users)),
-              width = .1, color = "blue") +
+              width = 0.1, color = "blue", size = 0.8) +
   labs(title = "Atividade de usuários Python no 1º trimestre", x = "Ano", y = "Usuários") +
   theme(plot.title = element_text(hjust = 0.5))
 
 ggplotly(p, tooltip = "text")
 ```
-
+  <br/>
 Entretanto, só observar essa visualização não nos traz confiança para reponder essa pergunta, uma vez que no gráfico acima estamos observando apenas uma amostra e não o total. Vamos usar a técnica bootstrap para coletar informações da amostra de forma que possamos determinar um intervalo de confiança do valor da diferença da atividade de programadores Python no primeiro trimestre dos anos 2016 e 2017.
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
@@ -74,8 +74,8 @@ data.frame(b.ci) %>%
   geom_errorbar(width = .2) + 
   geom_hline(yintercept = 0, colour = "darkorange")
 ```
-
-Podemos afirmar com 95% de confiança que a diferença da mediana para a popularidade da liguagem Python durante os três primeiros meses dos anos de 2016 e 2017 está no intervalo (`r b.ci`). Logo, ainda é possível afirmar que a popularidade da linguagem Python foi maior em 2016 do que em 2017, durante o primeiro trimestre do ano.
+  <br/>
+Podemos afirmar com 95% de confiança que a diferença da mediana para a popularidade da liguagem Python durante os três primeiros meses dos anos de 2016 e 2017 está no intervalo (`r b.ci`). Logo, ainda é possível afirmar que a popularidade da linguagem Python foi maior em 2016 do que em 2017, durante o primeiro trimestre do ano. Sendo assim, podemos concluir que essa diferença é relevante e tem essa significância de que com 95% de confiança se encontra no intervalo mostrado acima.
 
 ### Pergunta derivada 1
 
@@ -102,5 +102,70 @@ Podemos afirmar com 95% de confiança que a diferença do desvio padrão está n
 
 ## Pergunta 2
 
-**Há diferença significativa na produtividade dos desenvolvedores entre o sábado e o domingo?**
+**Qual o tipo de arquivo usado para representar e transmitir dados tem mais popularidade, xml ou json?**
 
+Ao observar o gráfico abaixo, de modo geral, percebemos que o número de commits de arquivos json parece ser bem maior que o de arquivos xml. 
+
+```{r fig.width=4, echo=TRUE, fig.height=2, message=FALSE, warning=FALSE}
+
+xml <- dados %>%
+  filter(file_extension == 'xml')
+
+json <- dados %>%
+  filter(file_extension == 'json')
+
+tipos.arquivos <- rbind(xml, json)
+
+p = tipos.arquivos %>%
+  ggplot(aes(x = file_extension, y = users)) +
+  geom_jitter(aes(text = paste("Usuários:", users, 
+                               "<br>", "Arquivo:", file_extension)),
+              width = .1, color = "blue", size = 0.5) +
+  labs(title = "Atividade dos desenvolvedores", x = "Tipo de Arquivo", y = "Usuários") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplotly(p, tooltip = "text")
+```
+  <br/>
+Entretanto, só observar essa visualização não nos traz confiança para reponder essa pergunta, uma vez que no gráfico acima estamos observando apenas uma amostra e não o total. Vamos usar a técnica bootstrap para coletar informações da amostra de forma que possamos determinar um intervalo de confiança do valor da diferença da atividade de programadores dos arquivos **json** e **xml**.
+
+```{r}
+#Diferença
+b <- bootstrap2(data = (json)$users, 
+               data2 = (xml)$users,
+               median)
+
+b.ci = CI.percentile(b, probs = c(.025, .975))
+
+data.frame(b.ci) %>% 
+  ggplot(aes(x = "Diferença", ymin = X2.5., ymax = X97.5.)) + 
+  geom_errorbar(width = .2) + 
+  geom_hline(yintercept = 0, colour = "darkorange")
+```
+  <br/>
+Podemos afirmar com 95% de confiança que a diferença da mediana para a popularidade de arquivos json e xml está no intervalo (`r b.ci`). Logo, ainda é possível afirmar que a popularidade dos arquivos json é maior que a de arquivos xml. Sendo assim, podemos concluir que essa diferença é relevante e tem essa significância de que com 95% de confiança se encontra no intervalo mostrado acima.
+  <br/>
+Acredito que json é mais popular devido a sua facilidade e eficiência em transmitir e representar os dados, também devido ao fato de json ser usado em conjunto com JavaScript que é uma linguagem que está crescendo cada vez mais no mercado web.
+
+### Pergunta derivada 2
+
+**Será que existe uma diferença significativa na variação da popularidade dos arquivos json e xml?**
+
+Para responder essa pergunta vamos utilizar a medida estatística **desvio padrão**, portanto o que nos interessa é obter o desvio padrão da popularidade dos arquivos json e xml.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
+b <- bootstrap2(data = (json)$users, 
+               data2 = (xml)$users,
+               sd)
+
+b.ci = CI.percentile(b, probs = c(.025, .975))
+
+data.frame(b.ci) %>% 
+  ggplot(aes(x = "Diferença", ymin = X2.5., ymax = X97.5.)) + 
+  geom_errorbar(width = .2) + 
+  geom_hline(yintercept = 0, colour = "darkorange")
+
+```
+  <br/>
+Podemos afirmar com 95% de confiança que a diferença do desvio padrão está no intervalo (`r b.ci`). Logo, ainda é possível afirmarmos que a variação da popularidade dos arquivos json é maior que a dos arquivos xml. Ainda podemos concluir que essa diferença é relevante e tem essa significância de que com 95% de confiança se encontra no intervalo mostrado acima.
