@@ -1,0 +1,122 @@
+---
+title: "Problema 4 - Checkpoint 4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(plotly)
+library(ggplot2)
+library(GGally)
+library(dplyr)
+library(tidyverse)
+library(resample) # <-- Para bootstrap!
+library(boot) 
+theme_set(theme_bw())
+
+```
+
+# Testes de hipótese x ICs
+
+Nesse checkpoint vamos refazer uma análise do checkpoint anterior, onde agora utilizaremos **teste de hipótese**. Escolhi a pergunta abaixo, que foi respondida utilizando **IC**.
+
+**1. Considerando os três primeiros meses do ano, será que a linguagem Python apresentou um aumento de popularidade entre 2016 e 2017?**
+
+Recentemente, segundo o IEEE, a linguagem de programação Python saltou para o 1º lugar entre as linguagens de programação mais populares, como podemos ver [aqui](http://spectrum.ieee.org/computing/software/the-2017-top-programming-languages). Será que vamos observar esse aumento de popularidade durante o primeiro trimestre de 2016 para 2017? 
+
+```{r message=FALSE, warning=FALSE}
+dados = read_csv(file = "./dados/github.csv") 
+
+dados$date <- paste(dados$month_day, dados$the_month, dados$the_year, sep = "-")
+
+python <- dados %>% 
+  filter(file_extension == 'py')
+
+python.trimestre1 <- python  %>%
+  filter(the_month == 1 | the_month == 2 |the_month == 3)
+
+python.2016 <- python.trimestre1  %>%
+  filter(the_year == 2016)
+
+python.2017 <- python.trimestre1  %>%
+  filter(the_year == 2017)
+```
+
+Ao observar o gráfico abaixo percebemos pouca diferença entre os commits de arquivos .py durante os três primeiros meses dos anos 2016 e 2017. De modo geral, a quantidade de commits não parece ter mudado muito compando o mesmo período nos dois anos.
+
+```{r fig.width=4, echo=TRUE, fig.height=2, message=FALSE, warning=FALSE}
+p = python.trimestre1 %>%
+  mutate(the_year = as.character(the_year)) %>%
+  ggplot(aes(x = the_year, y = users)) +
+  geom_jitter(aes(text = paste("Ano:", the_year, "<br>", "Usuários:", users)),
+              width = 0.1, color = "blue", size = 0.8) +
+  labs(title = "Atividade de usuários Python no 1º trimestre", x = "Ano", y = "Usuários") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplotly(p, tooltip = "text")
+```
+  <br/>
+Entretanto, só observar essa visualização não nos traz confiança para reponder essa pergunta, uma vez que no gráfico acima estamos observando apenas uma amostra e não o total. Vamos usar a técnica bootstrap para coletar informações da amostra de forma que possamos determinar um intervalo de confiança do valor da diferença da atividade de programadores Python no primeiro trimestre dos anos 2016 e 2017.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+#Diferença
+b <- bootstrap2(data = (python.2016)$users, 
+               data2 = (python.2017)$users,
+               median)
+
+b.ci = CI.percentile(b, probs = c(.025, .975))
+
+data.frame(b.ci) %>% 
+  ggplot(aes(x = "Diferença", ymin = X2.5., ymax = X97.5.)) + 
+  geom_errorbar(width = .2) + 
+  geom_hline(yintercept = 0, colour = "darkorange")
+```
+  <br/>
+Podemos afirmar com 95% de confiança que a diferença da mediana para a popularidade da liguagem Python durante os três primeiros meses dos anos de 2016 e 2017 está no intervalo (`r b.ci`). Logo, ainda é possível afirmar que a popularidade da linguagem Python foi maior em 2016 do que em 2017, durante o primeiro trimestre do ano. Sendo assim, podemos concluir que essa diferença é relevante e tem essa significância de que com 95% de confiança se encontra no intervalo mostrado acima.
+
+## Teste de Hipótese
+
+Inicialmente, vamos guardar as diferenças das medianas observadas na nossa amostra para a atividade dos programadores Python durante o primeiro trimestre de 2016 e 2017.
+
+```{r}
+medianas.2016x2017 = python.trimestre1 %>% 
+  group_by(the_year) %>% 
+  summarise(mediana = median(users))
+
+medianas.2016x2017
+
+diff.mediana.observada.2016x2017 = diff(medianas.2016x2017$mediana)
+```
+
+A diferança que encontramos para nossa amostra foi **`r diff.mediana.observada.2016x2017`**.
+
+Agora vejamos o quão frequente seria encontrarmos uma diferença do tamanho que encontramos *se não houvesse associação nenhuma entre qual é o ano e qual é a quantidade de commits por dia*. A situação onde não existe associação é a *hipótese nula*. Se a diferença que observamos em nossa amostra acontece facilmente na hipótese nula, isso significa que não temos evidência forte de associação: o que observamos acontece também quando não há associação. 
+
+No caso onde a diferença que observamos é improvável na hipótese nula, então observamos algo que é indicativo de associação. Repare que é uma dupla negação: se **não acontece** associação como a que vimos na amostra na situação onde **não** há associação, então temos evidência de que há associação. 
+
+```{r}
+set.seed(1)
+glimpse(python.trimestre1)
+diffs = replicate(10000, {
+  medianas = python.trimestre1 %>% 
+    mutate(id_embaralhado = sample(the_year, n())) %>% 
+    group_by(id_embaralhado) %>% 
+    summarise(mediana = mean(users))
+  python2016 = medianas %>% 
+    filter(id_embaralhado == "2016")
+  python2017 = medianas %>% 
+    filter(id_embaralhado == "2017")
+  return(python2016$mediana - python2017$mediana)
+})
+glimpse(diffs)
+tibble(diferenca = diffs) %>% 
+  ggplot(aes(x = diferenca)) + 
+  geom_histogram(bins = 30) + 
+  geom_vline(xintercept = diff.mediana.observada.2016x2017)
+
+# p-valor!
+p.valor = sum(abs(diffs) >= abs(diff.mediana.observada.2016x2017)) / length(diffs)
+```
+
+p-valor = `r p.valor`
