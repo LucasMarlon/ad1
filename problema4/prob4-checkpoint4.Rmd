@@ -21,7 +21,7 @@ theme_set(theme_bw())
 
 Nesse checkpoint vamos refazer uma análise do checkpoint anterior, onde agora utilizaremos **teste de hipótese**. Escolhi a pergunta abaixo, que foi respondida utilizando **IC**.
 
-**1. Considerando os três primeiros meses do ano, será que a linguagem Python apresentou um aumento de popularidade entre 2016 e 2017?**
+**Considerando os três primeiros meses do ano, será que a linguagem Python apresentou um aumento de popularidade entre 2016 e 2017?**
 
 Recentemente, segundo o IEEE, a linguagem de programação Python saltou para o 1º lugar entre as linguagens de programação mais populares, como podemos ver [aqui](http://spectrum.ieee.org/computing/software/the-2017-top-programming-languages). Será que vamos observar esse aumento de popularidade durante o primeiro trimestre de 2016 para 2017? 
 
@@ -91,7 +91,7 @@ diff.mediana.observada.2016x2017 = diff(medianas.2016x2017$mediana)
 
 A diferança que encontramos para nossa amostra foi **`r diff.mediana.observada.2016x2017`**.
 
-Agora vejamos o quão frequente seria encontrarmos uma diferença do tamanho que encontramos *se não houvesse associação nenhuma entre qual é o ano e qual é a quantidade de commits por dia*. A situação onde não existe associação é a *hipótese nula*. Se a diferença que observamos em nossa amostra acontece facilmente na hipótese nula, isso significa que não temos evidência forte de associação: o que observamos acontece também quando não há associação. 
+Agora vejamos o quão frequente seria encontrarmos uma diferença do tamanho que encontramos *se não houvesse associação nenhuma entre qual é o ano e qual é a quantidade de commits por dia* para a linguagem Python no primeiro trimestre dos anos 2016 e 2017. A situação onde não existe associação é a *hipótese nula*. Se a diferença que observamos em nossa amostra acontece facilmente na hipótese nula, isso significa que não temos evidência forte de associação: o que observamos acontece também quando não há associação. 
 
 No caso onde a diferença que observamos é improvável na hipótese nula, então observamos algo que é indicativo de associação. Repare que é uma dupla negação: se **não acontece** associação como a que vimos na amostra na situação onde **não** há associação, então temos evidência de que há associação. 
 
@@ -119,4 +119,13 @@ tibble(diferenca = diffs) %>%
 p.valor = sum(abs(diffs) >= abs(diff.mediana.observada.2016x2017)) / length(diffs)
 ```
 
-p-valor = `r p.valor`
+Ao observamos os valores das diferenças mostradas acima, levando em consideração nossa hipótese nula como verdeira, temos aproximadamente 1,4% (p-valor = `r p.valor`) das diferenças com valor igual ou superior ao valor da diferença encontrada na nossa amostra, que foi `r diff.mediana.observada.2016x2017`. Como o p-valor encontrado foi pequeno, podemos negar a nossa hipótese nula e concluir que a diferença da nossa amostra é estatisticamente significativa. Ou seja, existe uma associação entre a popularidade da liguagem Python e o ano, e que a popularidade foi maior no primeiro trimestre de 2016 comparando com o mesmo período de 2017.
+
+**Falando sobre p-valor...**
+
+Se usarmos o exemplo acima para explicar o que é o p-valor poderíamos dizer que é a probabilidade que mede quantos dos valores encontrados, quando a hipótese nula é verdadeira, são maiores ou iguais em módulo ao valor observado na amostra. 
+
+### Comparando os resultados IC x Teste de Hipótese
+
+Agora, podemos observar que ao tentar responder a pergunta: *"Considerando os três primeiros meses do ano, será que a linguagem Python apresentou um aumento de popularidade entre 2016 e 2017?"*, utilizando IC e teste de hipótese chegamos ao mesmo restultado. 
+
