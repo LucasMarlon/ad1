@@ -1,5 +1,6 @@
 ---
 title: "Problema 4 - Checkpoint 4"
+author: "Lucas Marlon"
 output: html_document
 ---
 
@@ -128,4 +129,5 @@ Se usarmos o exemplo acima para explicar o que é o p-valor poderíamos dizer qu
 ### Comparando os resultados IC x Teste de Hipótese
 
 Agora, podemos observar que ao tentar responder a pergunta: *"Considerando os três primeiros meses do ano, será que a linguagem Python apresentou um aumento de popularidade entre 2016 e 2017?"*, utilizando IC e teste de hipótese chegamos ao mesmo restultado. 
+A principal diferença é que quando utilizamos intervalo de confiança nós podemos controlar a significância estatística dos resultados que encontramos, além de falarmos da relevância que esses resultados têm.
 
