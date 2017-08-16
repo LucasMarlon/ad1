@@ -5,7 +5,7 @@ date: "15 de agosto de 2017"
 output: html_document
 ---
 
-```{r}
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
 suppressWarnings(library(tidyverse))
 
 library(tidyverse)
@@ -15,244 +15,215 @@ library(ggfortify)
 library(broom)
 require(ISLR)
 library(modelr) # devtools::install_github("hadley/modelr")
-
 ```
 
-# Os dados
+# Sobre os dados
 
+Nesse relatório, vamos utilizar os dados de 5000 encontros relâmpagos ([Speed Dating](http://www.speeddatingbrasil.com.br/o-que-e.php)) de 4 minutos envolvendo 310 jovens americanos. Cada participante tinha vários encontros de 4 minutos por noite. Após cada encontro, eles preenchiam fichas avaliando aqueles com quem se encontraram. 
+
+```{r message=FALSE, warning=FALSE}
+speed.dating = read_csv("./dados/speed-dating.csv")
+```
+
+Vamos filtrar os dados e separá-los em dois grupos, o primeiro onde as mulheres avaliam os encontros e o segundo onde os homens que avaliam seus encontros. Além disso, nosso foco será descobrir qual característica, **inteligente** ou **divertido**, tem maior relação com o fato da pessoa, de modo geral, gostar da outra. 
+
+As variáveis que vamos usar para realizar nossa análise são: 
+
+**like**: representa, de modo geral, o quão uma pessoa gostou da outra; 
+  <br/>**intel**: representa o quão inteligente uma pessoa achou a outra; 
+  <br/>**fun**: representa o quão divertido uma pessoa achou a outra.
+  
 ```{r}
-seep.dating = read_csv("./dados/speed-dating.csv") 
-seep.dating %>% 
-  filter(like != 'NA', intel != 'NA', sinc != 'NA') %>% 
-  select(like, intel, sinc) %>% 
+# intel.model = lm(like ~ intel + fun, data = speed.dating)
+# 
+# adv_augmented = speed.dating %>% 
+#   select(like, fun, intel) %>% 
+#   filter(complete.cases(.)) %>% 
+#   data_grid(intel = seq_range(intel, 10), 
+#             fun = seq_range(fun, 3)) %>% 
+#   add_predictions(intel.model)
+# 
+# # Modelo x dados
+# speed.dating %>% 
+#   ggplot(aes(x = intel)) + 
+#   geom_count(aes(y = like)) + 
+#   geom_line(data = adv_augmented, aes(y = pred, x = intel, group = fun), size = 2, colour = "blue") 
+# 
+# # Resíduos x dados
+# adv_augmented %>% 
+#   ggplot(aes(x = intel)) + 
+#   geom_point(aes(y = resid), size = 2) +
+#   geom_ref_line(h = 0, colour = "grey80")
+# 
+# tidy(intel.model, conf.int = TRUE)
+# glance(intel.model, conf.int = TRUE)
+```
+
+
+# Avaliação das Mulheres 
+
+Aqui vamos analisar a relação das características inteligente e divertido com o fato das mulheres gostarem das pessoas após o speed dating. 
+
+```{r message=FALSE, warning=FALSE}
+mulheres = speed.dating %>% 
+  filter(gender == 0, like != 'NA', fun != 'NA', intel != 'NA')
+
+mulheres %>% 
+  select(intel, fun, like) %>% 
   ggpairs(lower = list(continuous = wrap("points", alpha = 0.3)))
 ```
 
-# Uma regressão linear simples 
-
-### Modelo da relação entre gasto com TV e vendas. 
-
-Linear direto com os dados.
+Acima, já conseguimos observar uma correlação positiva, tanto para característica inteligente (0.545), quanto para divertido (0.703), com o fato das mulheres gostarem da outra pessoa após o speed dating.   
 
 ```{r}
-intel.model = lm(like ~ intel + fun, data = seep.dating)
+intel.model.mulheres = lm(like ~ intel, data = mulheres)
 
-adv_augmented = seep.dating %>% 
-  select(like, fun, intel) %>% 
-  filter(complete.cases(.)) %>% 
-  data_grid(intel = seq_range(intel, 10), 
-            fun = seq_range(fun, 3)) %>% 
-  add_predictions(intel.model)
+adv_augmented = mulheres %>% 
+  add_predictions(intel.model.mulheres) %>% 
+  add_residuals(intel.model.mulheres)
 
 # Modelo x dados
-seep.dating %>% 
+adv_augmented %>% 
   ggplot(aes(x = intel)) + 
-  geom_count(aes(y = like)) + 
-  geom_line(data = adv_augmented, aes(y = pred, x = intel, group = fun), size = 2, colour = "blue") 
+  geom_line(aes(y = pred), size = 2, colour = "blue") + 
+  geom_point(aes(y = like))
 
 # Resíduos x dados
 adv_augmented %>% 
   ggplot(aes(x = intel)) + 
   geom_point(aes(y = resid), size = 2) +
   geom_ref_line(h = 0, colour = "grey80")
-
-tidy(intel.model, conf.int = TRUE)
-glance(intel.model, conf.int = TRUE)
-
 ```
 
-A pessoa ser divertiva 
-
-
 ```{r}
-d = tibble(x = 1:100)
+fun.model.mulheres = lm(like ~ fun, data = mulheres)
 
-d %>% 
-  ggplot(aes(x = x)) + 
-  geom_line(aes(y = log(x)), color = "blue") + 
-  geom_line(aes(y = sqrt(x)), color = "red") 
-
-```
-
-
-Transformações.
-
-```{r}
-advertising  = advertising %>% 
-  mutate(TVsqrt = sqrt(TV))
-
-tv.model = lm(Sales ~ TVsqrt, data = advertising)
-
-adv_augmented = advertising %>% 
-  add_predictions(tv.model) %>% 
-  add_residuals(tv.model)
+adv_augmented = mulheres %>% 
+  add_predictions(fun.model.mulheres) %>% 
+  add_residuals(fun.model.mulheres)
 
 # Modelo x dados
 adv_augmented %>% 
-  ggplot(aes(x = TVsqrt)) + 
+  ggplot(aes(x = fun)) + 
   geom_line(aes(y = pred), size = 2, colour = "blue") + 
-  geom_point(aes(y = Sales))
-
-adv_augmented %>% 
-  ggplot(aes(x = TV)) + 
-  geom_line(aes(y = pred), size = 2, colour = "blue") + 
-  geom_point(aes(y = Sales))
+  geom_point(aes(y = like))
 
 # Resíduos x dados
 adv_augmented %>% 
-  ggplot(aes(x = TV)) + 
+  ggplot(aes(x = fun)) + 
   geom_point(aes(y = resid), size = 2) +
   geom_ref_line(h = 0, colour = "grey80")
-
-tidy(tv.model, conf.int = TRUE)
-glance(tv.model, conf.int = TRUE)
-
-# Depois
-# autoplot(tv.model)
 ```
 
-Os resíduos ainda dão sinal de não linearidade. Vamos tentar outra transformação.
+## Modelo 1 (mulheres) 
+
+Para realizar nossa análise vamos considerar os dois preditores ao mesmo tempo no nosso modelo:
 
 ```{r}
-advertising  = advertising %>% 
-  mutate(TVlog = log2(TV), 
-         Saleslog = log2(Sales))
+mulheres.model = lm(like ~ intel + fun, data = mulheres)
 
-advertising %>% 
-  ggplot(aes(x = TVlog, y = Saleslog)) + 
-  geom_point(alpha = .6)
+plotar_modelo_mulheres = mulheres %>% 
+  data_grid(intel = seq_range(intel, 10), # Crie um vetor de 10 valores no range de intel
+            fun = seq_range(fun, 4)) %>%  # Vetor de 4 valores no range de fun 
+  add_predictions(mulheres.model)
 
-tv.model = lm(Saleslog ~ TVlog, data = advertising)
+glimpse(plotar_modelo_mulheres)
+plotar_modelo_mulheres %>% 
+  ggplot(aes(x = intel, y = pred)) + 
+  geom_line(aes(group = fun, colour = fun))
+```
 
-adv_augmented = advertising %>% 
-  add_predictions(tv.model) %>% 
-  add_residuals(tv.model)
+Logo abaixo, se observamos os coeficientes encontrados para o nosso modelo, podemos afimar segundo os intervalos de confiança, que as características inteligente (intel) e divertido (fun) são estatisticamente significativos ao fato das mulheres gostarem das pessoas. Sendo a característica divertido quase duas vezes mais relevante que inteligente quando de trata das mulheres, de modo geral, gostarem de alguém.  
+
+```{r message=FALSE, warning=FALSE}
+tidy(mulheres.model, conf.int = TRUE) %>% 
+  select(-std.error, -p.value)
+```
+
+Nosso modelo consegue explicar aproximadamente 55% da variação dos nossos dados, ou seja, podemos afirmar que nossa variável dependente (like) consegue ser bem explicada pelas características inteligente e divertido.
+
+```{r}
+glance(mulheres.model, conf.int = TRUE)
+```
+
+
+# Avaliação dos Homens
+
+Aqui vamos analisar a relação das características inteligente e divertido com o fato dos homens gostarem das pessoas após o speed dating. 
+
+```{r message=FALSE, warning=FALSE}
+homens = speed.dating %>% 
+  filter(gender == 1, like != 'NA', fun != 'NA', intel != 'NA')
+
+homens %>% 
+  select(intel, fun, like) %>% 
+  ggpairs(lower = list(continuous = wrap("points", alpha = 0.3)))
+```
+ 
+ Acima, já conseguimos observar uma correlação positiva, tanto para característica inteligente (0.469), quanto para divertido (0.651), com o fato dos homens gostarem da outra pessoa após o speed dating.   
+
+```{r}
+intel.model.homens = lm(like ~ intel, data = homens)
+
+adv_augmented = homens %>% 
+  add_predictions(intel.model.homens) %>% 
+  add_residuals(intel.model.homens)
 
 # Modelo x dados
 adv_augmented %>% 
-  ggplot(aes(x = TVlog)) + 
+  ggplot(aes(x = intel)) + 
   geom_line(aes(y = pred), size = 2, colour = "blue") + 
-  geom_point(aes(y = Saleslog))
-
-adv_augmented %>% 
-  ggplot(aes(x = TV)) + 
-  geom_line(aes(y = 2^(pred)), size = 2, colour = "blue") + 
-  geom_point(aes(y = 2^(Saleslog)))
+  geom_point(aes(y = like))
 
 # Resíduos x dados
 adv_augmented %>% 
-  ggplot(aes(x = TV)) + 
+  ggplot(aes(x = intel)) + 
   geom_point(aes(y = resid), size = 2) +
   geom_ref_line(h = 0, colour = "grey80")
-
-tidy(tv.model, conf.int = TRUE)
-glance(tv.model, conf.int = TRUE)
-
-# Depois
-# autoplot(tv.model)
 ```
 
-# Colocando mais variáveis como preditoras
-
 ```{r}
-radio.model = lm(Saleslog ~ Radio, data = advertising)
+fun.model.homens = lm(like ~ fun, data = homens)
 
-adv_augmented = advertising %>% 
-  add_predictions(radio.model) %>% 
-  add_residuals(radio.model)
+adv_augmented = homens %>% 
+  add_predictions(fun.model.homens) %>% 
+  add_residuals(fun.model.homens)
 
 # Modelo x dados
 adv_augmented %>% 
-  ggplot(aes(x = Radio)) + 
+  ggplot(aes(x = fun)) + 
   geom_line(aes(y = pred), size = 2, colour = "blue") + 
-  geom_point(aes(y = Saleslog))
+  geom_point(aes(y = like))
 
+# Resíduos x dados
 adv_augmented %>% 
-  ggplot(aes(x = Radio)) + 
-  geom_point(aes(y = resid))
+  ggplot(aes(x = fun)) + 
+  geom_point(aes(y = resid), size = 2) +
+  geom_ref_line(h = 0, colour = "grey80")
+```
 
-tidy(radio.model, conf.int = TRUE)
-glance(radio.model, conf.int = TRUE)
+## Modelo 2 (homens) 
+
+```{r message=FALSE, warning=FALSE}
+homens.model = lm(like ~ intel + fun, data = homens)
+
+plotar_modelo_homens = homens %>% 
+  data_grid(intel = seq_range(intel, 10), # Cria um vetor de 10 valores no range de intel
+            fun = seq_range(fun, 4)) %>%  # Vetor de 4 valores no range de fun 
+  add_predictions(homens.model)
+
+glimpse(plotar_modelo_homens)
+plotar_modelo_homens %>% 
+  ggplot(aes(x = intel, y = pred)) + 
+  geom_line(aes(group = fun, colour = fun))
 ```
 
 ```{r}
-np.model = lm(Sales ~ Newspaper, data = advertising)
-tidy(np.model, conf.int = TRUE)
-glance(np.model, conf.int = TRUE)
-```
-
-Considerando os preditores ao mesmo tempo. Isso é diferente de considerá-los separadamente:
-
-```{r}
-multi = lm(Saleslog ~ TVlog + Newspaper + Radio, data = advertising)
-
-adv_augmented = advertising %>% 
-  add_predictions(multi) %>% 
-  add_residuals(multi)
-
-# adv_augmented %>% 
-#   ggplot(aes(x = TVlog)) + 
-#   geom_line(aes(y = pred), size = 2, colour = "blue") + 
-#   geom_point(aes(y = Saleslog))
-
-adv_augmented %>% 
-  ggplot(aes(x = Sales)) + 
-  geom_point(aes(y = resid))
-
-tidy(multi, conf.int = TRUE)
-glance(multi)
-```
-
-Repare na diferença nas significâncias dos preditores para os modelos univariados e para o multivariado.
-
-Algumas perguntas que queremos responder: 
-
-* O modelo considerando esses preditores é útil em explicar a resposta?
-* Todos os preditores contribuem para explicar a resposta, ou apenas algum?
-* Quão bem ajustado aos dados o modelo está?
-
-# Interações não aditivas
-
-# TODO como modelar interações quando espero que o efeito tenha sinais diferentes?
-
-```{r}
-multi = lm(Saleslog ~ TVlog + Radio + Newspaper + Radio*TVlog + Radio*Newspaper, data = advertising)
-
-adv_augmented = advertising %>% 
-  add_predictions(multi) %>% 
-  add_residuals(multi)
-
-adv_augmented %>% 
-  ggplot(aes(x = Sales)) + 
-  geom_point(aes(y = resid))
-
-
-tidy(multi, conf.int = TRUE)
-glance(multi)
-autoplot(multi)
+tidy(homens.model, conf.int = TRUE) %>% 
+  select(-std.error, -p.value)
 ```
 
 
-Qual o intervalo de confiança da estimativa de `Saleslog` para uma certa combinação de valores de investimento em Rádio, TV e Jornal impresso?
-
 ```{r}
-predict(multi, 
-        data.frame(Radio = 10e3, TVlog = log2(20e3), Newspaper = 0), 
-        interval = "predict")
-
-```
-
-# Visualizando o modelo multivariado
-
-```{r}
-
-advertising %>% 
-  data_grid(TVlog = seq_range(TVlog, 10), 
-            Radio = seq_range(Radio, 4), 
-            Newspaper = seq_range(Newspaper, 4)) %>% 
-  add_predictions(multi) %>% 
-  ggplot(aes(x = TVlog, y = pred)) + 
-  geom_line(aes(group = Radio, colour = Radio)) + 
-  facet_grid(. ~ Newspaper)
-
+glance(homens.model, conf.int = TRUE)
 ```
