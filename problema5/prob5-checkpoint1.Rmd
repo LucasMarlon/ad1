@@ -32,33 +32,6 @@ As variáveis que vamos usar para realizar nossa análise são:
 **like**: representa, de modo geral, o quão uma pessoa gostou da outra; 
   <br/>**intel**: representa o quão inteligente uma pessoa achou a outra; 
   <br/>**fun**: representa o quão divertido uma pessoa achou a outra.
-  
-```{r}
-# intel.model = lm(like ~ intel + fun, data = speed.dating)
-# 
-# adv_augmented = speed.dating %>% 
-#   select(like, fun, intel) %>% 
-#   filter(complete.cases(.)) %>% 
-#   data_grid(intel = seq_range(intel, 10), 
-#             fun = seq_range(fun, 3)) %>% 
-#   add_predictions(intel.model)
-# 
-# # Modelo x dados
-# speed.dating %>% 
-#   ggplot(aes(x = intel)) + 
-#   geom_count(aes(y = like)) + 
-#   geom_line(data = adv_augmented, aes(y = pred, x = intel, group = fun), size = 2, colour = "blue") 
-# 
-# # Resíduos x dados
-# adv_augmented %>% 
-#   ggplot(aes(x = intel)) + 
-#   geom_point(aes(y = resid), size = 2) +
-#   geom_ref_line(h = 0, colour = "grey80")
-# 
-# tidy(intel.model, conf.int = TRUE)
-# glance(intel.model, conf.int = TRUE)
-```
-
 
 # Avaliação das Mulheres 
 
@@ -74,46 +47,6 @@ mulheres %>%
 ```
 
 Acima, já conseguimos observar uma correlação positiva, tanto para característica inteligente (0.545) quanto para divertido (0.703), com o fato das mulheres gostarem da outra pessoa após o *speed dating*.   
-
-```{r}
-intel.model.mulheres = lm(like ~ intel, data = mulheres)
-
-adv_augmented = mulheres %>% 
-  add_predictions(intel.model.mulheres) %>% 
-  add_residuals(intel.model.mulheres)
-
-# Modelo x dados
-adv_augmented %>% 
-  ggplot(aes(x = intel)) + 
-  geom_line(aes(y = pred), size = 2, colour = "blue") + 
-  geom_point(aes(y = like))
-
-# Resíduos x dados
-adv_augmented %>% 
-  ggplot(aes(x = intel)) + 
-  geom_point(aes(y = resid), size = 2) +
-  geom_ref_line(h = 0, colour = "grey80")
-```
-
-```{r}
-fun.model.mulheres = lm(like ~ fun, data = mulheres)
-
-adv_augmented = mulheres %>% 
-  add_predictions(fun.model.mulheres) %>% 
-  add_residuals(fun.model.mulheres)
-
-# Modelo x dados
-adv_augmented %>% 
-  ggplot(aes(x = fun)) + 
-  geom_line(aes(y = pred), size = 2, colour = "blue") + 
-  geom_point(aes(y = like))
-
-# Resíduos x dados
-adv_augmented %>% 
-  ggplot(aes(x = fun)) + 
-  geom_point(aes(y = resid), size = 2) +
-  geom_ref_line(h = 0, colour = "grey80")
-```
 
 ## Modelo 1 (mulheres) 
 
@@ -133,6 +66,25 @@ plotar_modelo_mulheres %>%
   geom_line(aes(group = fun, colour = fun))
 ```
 
+Inicialmente, vamos visualizar os resíduos em função de cada preditor do modelo 1 (mulheres):
+
+```{r}
+adv_augmented = mulheres %>% 
+  add_predictions(mulheres.model) %>% 
+  add_residuals(mulheres.model)
+
+# Resíduos em função de intel
+adv_augmented %>% 
+  ggplot(aes(x = intel)) + 
+  geom_count(aes(y = resid))
+
+# Resíduos em função de fun
+adv_augmented %>% 
+  ggplot(aes(x = fun)) + 
+  geom_count(aes(y = resid))
+```
+  <br/>Como podemos observar em relação aos resíduos não há nada alarmante em termos de valores extremos, relações obviamente não-lineares e nem heteroscedasticidade, então vamos examinar os coeficientes e o modelo.
+  <br/>
 Logo abaixo, se observamos os coeficientes encontrados para o modelo 1 (mulheres), podemos afimar segundo os intervalos de confiança, que as características inteligente (intel) e divertido (fun) são estatisticamente significativas ao fato das mulheres gostarem das pessoas. Sendo a característica divertido quase duas vezes mais relevante que inteligente quando de trata das mulheres, de modo geral, gostarem de alguém.  
 
 ```{r message=FALSE, warning=FALSE}
@@ -163,46 +115,6 @@ homens %>%
  
  Acima, já conseguimos observar uma correlação positiva, tanto para característica inteligente (0.469) quanto para divertido (0.651), com o fato dos homens gostarem da outra pessoa após o *speed dating*.   
 
-```{r}
-intel.model.homens = lm(like ~ intel, data = homens)
-
-adv_augmented = homens %>% 
-  add_predictions(intel.model.homens) %>% 
-  add_residuals(intel.model.homens)
-
-# Modelo x dados
-adv_augmented %>% 
-  ggplot(aes(x = intel)) + 
-  geom_line(aes(y = pred), size = 2, colour = "blue") + 
-  geom_point(aes(y = like))
-
-# Resíduos x dados
-adv_augmented %>% 
-  ggplot(aes(x = intel)) + 
-  geom_point(aes(y = resid), size = 2) +
-  geom_ref_line(h = 0, colour = "grey80")
-```
-
-```{r}
-fun.model.homens = lm(like ~ fun, data = homens)
-
-adv_augmented = homens %>% 
-  add_predictions(fun.model.homens) %>% 
-  add_residuals(fun.model.homens)
-
-# Modelo x dados
-adv_augmented %>% 
-  ggplot(aes(x = fun)) + 
-  geom_line(aes(y = pred), size = 2, colour = "blue") + 
-  geom_point(aes(y = like))
-
-# Resíduos x dados
-adv_augmented %>% 
-  ggplot(aes(x = fun)) + 
-  geom_point(aes(y = resid), size = 2) +
-  geom_ref_line(h = 0, colour = "grey80")
-```
-
 ## Modelo 2 (homens) 
 
 Para realizar nossa análise vamos considerar os dois preditores ao mesmo tempo no nosso modelo:
@@ -221,6 +133,25 @@ plotar_modelo_homens %>%
   geom_line(aes(group = fun, colour = fun))
 ```
 
+Inicialmente, vamos visualizar os resíduos em função de cada preditor do modelo 2 (homens):
+
+```{r}
+adv_augmented = homens %>% 
+  add_predictions(homens.model) %>% 
+  add_residuals(homens.model)
+
+#Resíduos em função de intel
+adv_augmented %>% 
+  ggplot(aes(x = intel)) + 
+  geom_count(aes(y = resid))
+
+#Resíduos em função de fun
+adv_augmented %>% 
+  ggplot(aes(x = fun)) + 
+  geom_count(aes(y = resid))
+```
+  <br/>Como podemos observar em relação aos resíduos não há nada alarmante em termos de valores extremos, relações obviamente não-lineares e nem heteroscedasticidade, semelhante ao que encontramos para o nosso modelo 1 (mulheres). Então vamos examinar os coeficientes e o modelo 2 (homens).
+  <br/>
 Logo abaixo, se observamos os coeficientes encontrados para modelo 2 (homens), podemos afimar segundo os intervalos de confiança, que as características inteligente (intel) e divertido (fun) são estatisticamente significativas ao fato dos homens gostarem das pessoas, semelhante ao que encontramos no nosso modelo 1 (mulheres). Sendo que para o modelo 2 (homens) a característica divertido é um pouco mais que duas vezes relevante do que a característica inteligente quando de trata dos homens, de modo geral, gostarem de alguém. Ou seja, um pouco maior do que o que encontramos para o modelo 1 (mulheres).
 
 ```{r}
