@@ -19,7 +19,7 @@ library(modelr) # devtools::install_github("hadley/modelr")
 
 # Sobre os dados
 
-Nesse relatório, vamos utilizar os dados de 5000 encontros relâmpagos ([Speed Dating](http://www.speeddatingbrasil.com.br/o-que-e.php)) de 4 minutos envolvendo 310 jovens americanos. Cada participante tinha vários encontros de 4 minutos por noite. Após cada encontro, eles preenchiam fichas avaliando aqueles com quem se encontraram. 
+Nesse relatório, vamos utilizar os dados de 5000 encontros relâmpagos ([Speed Dating](http://www.speeddatingbrasil.com.br/o-que-e.php)) de 4 minutos envolvendo 310 jovens americanos. Cada participante tinha vários encontros de 4 minutos por noite. Após cada encontro, eles preenchiam fichas avaliando aqueles com quem se encontraram, e é com os dados desses formulários que vamos trabalhar. 
 
 ```{r message=FALSE, warning=FALSE}
 speed.dating = read_csv("./dados/speed-dating.csv")
@@ -35,7 +35,7 @@ As variáveis que vamos usar para realizar nossa análise são:
 
 # Avaliação das Mulheres 
 
-Aqui vamos analisar a relação das características inteligente e divertido com o fato das mulheres gostarem das pessoas após o *speed dating*. 
+Aqui vamos analisar a relação das características inteligente e divertido com o fato das **mulheres** gostarem das pessoas após o *speed dating*. 
 
 ```{r message=FALSE, warning=FALSE}
 mulheres = speed.dating %>% 
@@ -102,7 +102,7 @@ Será que vamos observar resultados semelhantes ao criamos nosso modelos para os
 
 # Avaliação dos Homens
 
-Agora vamos analisar a relação das características inteligente e divertido com o fato dos homens gostarem das pessoas após o *speed dating*. 
+Agora vamos analisar a relação das características inteligente e divertido com o fato dos **homens** gostarem das pessoas após o *speed dating*. 
 
 ```{r message=FALSE, warning=FALSE}
 homens = speed.dating %>% 
@@ -113,11 +113,11 @@ homens %>%
   ggpairs(lower = list(continuous = wrap("points", alpha = 0.3)))
 ```
  
- Acima, já conseguimos observar uma correlação positiva, tanto para característica inteligente (0.469) quanto para divertido (0.651), com o fato dos homens gostarem da outra pessoa após o *speed dating*.   
+ Acima, já conseguimos observar uma correlação positiva, tanto para característica inteligente (0.469) quanto para divertido (0.651), com o fato dos homens gostarem da outra pessoa após o *speed dating*. Comportamento semelhante ao encontrado para o grupo das mulheres. 
 
 ## Modelo 2 (homens) 
 
-Para realizar nossa análise vamos considerar os dois preditores ao mesmo tempo no nosso modelo:
+Para realizar nossa análise desse modelo também vamos considerar os dois preditores ao mesmo tempo:
 
 ```{r message=FALSE, warning=FALSE}
 homens.model = lm(like ~ intel + fun, data = homens)
@@ -150,16 +150,16 @@ adv_augmented %>%
   ggplot(aes(x = fun)) + 
   geom_count(aes(y = resid))
 ```
-  <br/>Como podemos observar em relação aos resíduos não há nada alarmante em termos de valores extremos, relações obviamente não-lineares e nem heteroscedasticidade, semelhante ao que encontramos para o nosso modelo 1 (mulheres). Então vamos examinar os coeficientes e o modelo 2 (homens).
+  <br/>Como podemos observar em relação aos resíduos desse modelo 2 (homens) também não há nada alarmante em termos de valores extremos, relações obviamente não-lineares e nem heteroscedasticidade, semelhante ao que encontramos para o nosso modelo 1 (mulheres). Então vamos examinar os coeficientes e o modelo 2 (homens).
   <br/>
-Logo abaixo, se observamos os coeficientes encontrados para modelo 2 (homens), podemos afimar segundo os intervalos de confiança, que as características inteligente (intel) e divertido (fun) são estatisticamente significativas ao fato dos homens gostarem das pessoas, semelhante ao que encontramos no nosso modelo 1 (mulheres). Sendo que para o modelo 2 (homens) a característica divertido é um pouco mais que duas vezes relevante do que a característica inteligente quando de trata dos homens, de modo geral, gostarem de alguém. Ou seja, um pouco maior do que o que encontramos para o modelo 1 (mulheres).
+Logo abaixo, se observamos os coeficientes encontrados para modelo 2 (homens), podemos afimar segundo os intervalos de confiança, que as características inteligente (intel) e divertido (fun) são estatisticamente significativas ao fato dos homens gostarem das pessoas, semelhante ao que encontramos no nosso modelo 1 (mulheres). Sendo que para o modelo 2 (homens) a característica divertido é um pouco mais que duas vezes relevante do que a característica inteligente quando de trata dos homens, de modo geral, gostarem de alguém. Ou seja, um pouco maior do quê o que encontramos para o modelo 1 (mulheres).
 
 ```{r}
 tidy(homens.model, conf.int = TRUE) %>% 
   select(-std.error, -p.value)
 ```
 
-Nosso modelo 2 (homens) consegue explicar aproximadamente 44% da variação dos nossos dados. Mesmo sendo uma porcentagem menor que a encontrada para o nosso modelo 1 (mulheres) ainda podemos afirmar que nossa variável dependente (like) consegue ser bem explicada pelas características inteligente e divertido. 
+Nosso modelo 2 (homens) consegue explicar aproximadamente 44% da variação dos nossos dados. Mesmo sendo uma porcentagem um pouco menor que a encontrada para o nosso modelo 1 (mulheres) ainda podemos afirmar que nossa variável dependente (like) consegue ser bem explicada pelas características inteligente e divertido. 
 
 ```{r}
 glance(homens.model, conf.int = TRUE)
