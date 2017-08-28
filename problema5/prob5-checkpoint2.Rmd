@@ -1,0 +1,46 @@
+---
+title: "Regressão Logística"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(GGally)
+library(pscl)
+library(broom)
+library(tidyverse)
+library(modelr) # devtools::install_github("hadley/modelr")
+
+theme_set(theme_bw())
+```
+
+## Match
+
+Nesse checkpoint vamos trabalhar com os mesmos dados do checkpoint anterior, porém vamos utilizar uma a variável **dec** como variável dependente, a qual pode possuir dois valores *yes* ou *no*, que significa dizer se a p1 está afim ou não de se encontrar novamente com p2, ou seja, se após o [speed dating](http://www.speeddatingbrasil.com.br/o-que-e.php) p1 deu *match* com p2.
+
+```{r message=FALSE, warning=FALSE}
+speed.dating = read_csv("./dados/speed-dating2.csv")
+```
+
+Vamos resposder duas perguntas: 
+
+1. Dentre os fatores que você acha que podem ter efeito no match, quais fatores têm efeito significativo na chance de p1 decidir se encontrar novamente com p2? E como é esse efeito (positivo/negativo)?
+
+Para responder essa pergunta vou considerar as duas características que considerei no checkpoint anterior, que são: **inteligente** e **divertido**.
+
+```{r}
+speed.dating = speed.dating %>% 
+  mutate(dec = as.factor(dec))
+
+model = glm(dec ~ intel + fun, 
+                  data = speed.dating, 
+                  family = "binomial")
+tidy(model, conf.int = TRUE, exponentiate = TRUE) %>% 
+  select(-p.value)
+glance(model)
+pR2(model)
+```
+
+
+2. Que fatores nos dados têm mais efeito na chance de um participante querer se encontrar novamente com outro?
