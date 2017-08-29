@@ -124,34 +124,47 @@ $(document).ready(function () {
 <h2>Match</h2>
 <p>Nesse checkpoint vamos trabalhar com os mesmos dados do checkpoint anterior, porém vamos utilizar uma a variável <strong>dec</strong> como variável dependente, a qual pode possuir dois valores <em>yes</em> ou <em>no</em>, que significa dizer se a p1 está afim ou não de se encontrar novamente com p2, ou seja, se após o <a href="http://www.speeddatingbrasil.com.br/o-que-e.php">speed dating</a> p1 deu <em>match</em> com p2.</p>
 <pre class="r"><code>speed.dating = read_csv(&quot;./dados/speed-dating2.csv&quot;)</code></pre>
-<p>Vamos resposder duas perguntas:</p>
+<p>Vamos responder duas perguntas:</p>
 <ol style="list-style-type: decimal">
 <li>Dentre os fatores que você acha que podem ter efeito no match, quais fatores têm efeito significativo na chance de p1 decidir se encontrar novamente com p2? E como é esse efeito (positivo/negativo)?</li>
 </ol>
-<p>Para responder essa pergunta vou considerar as duas características que considerei no checkpoint anterior, que são: <strong>inteligente</strong> e <strong>divertido</strong>.</p>
+<p>Para responder essa pergunta vou considerar as características: <strong>inteligente</strong>, <strong>divertido</strong>, <strong>atraente</strong> e <strong>sincero</strong>, que são características que eu acredito terem algum efeito no match.</p>
 <pre class="r"><code>speed.dating = speed.dating %&gt;% 
   mutate(dec = as.factor(dec))
 
-model = glm(dec ~ intel + fun, 
+model = glm(dec ~ intel + fun + attr + sinc, 
                   data = speed.dating, 
                   family = &quot;binomial&quot;)
+
+tidy(model, conf.int = TRUE) %&gt;% 
+  select(-p.value)</code></pre>
+<pre><code>##          term    estimate  std.error  statistic   conf.low   conf.high
+## 1 (Intercept) -5.20728292 0.22259689 -23.393332 -5.6491439 -4.77643994
+## 2       intel -0.04257304 0.03244312  -1.312236 -0.1062648  0.02093832
+## 3         fun  0.33924435 0.02552026  13.293140  0.2895535  0.38961679
+## 4        attr  0.57076706 0.02578215  22.138071  0.5207562  0.62184225
+## 5        sinc -0.07761916 0.02830829  -2.741923 -0.1331879 -0.02218890</code></pre>
+<pre class="r"><code># EXPONENCIANDO:
 tidy(model, conf.int = TRUE, exponentiate = TRUE) %&gt;% 
   select(-p.value)</code></pre>
-<pre><code>##          term   estimate  std.error    statistic   conf.low  conf.high
-## 1 (Intercept) 0.02668439 0.18153127 -19.96172015 0.01862692 0.03795122
-## 2       intel 0.99844212 0.02556183  -0.06099301 0.94955674 1.04965706
-## 3         fun 1.67454377 0.02281031  22.60121226 1.60215544 1.75203790</code></pre>
-<pre class="r"><code>glance(model)</code></pre>
-<pre><code>##   null.deviance df.null    logLik      AIC      BIC deviance df.residual
-## 1      6385.975    4683 -2764.706 5535.412 5554.768 5529.412        4681</code></pre>
+<pre><code>##          term    estimate  std.error  statistic    conf.low   conf.high
+## 1 (Intercept) 0.005476534 0.22259689 -23.393332 0.003520529 0.008425943
+## 2       intel 0.958320470 0.03244312  -1.312236 0.899186515 1.021159069
+## 3         fun 1.403886340 0.02552026  13.293140 1.335830849 1.476414902
+## 4        attr 1.769623943 0.02578215  22.138071 1.683300020 1.862355809
+## 5        sinc 0.925316754 0.02830829  -2.741923 0.875300565 0.978055459</code></pre>
+<p>Quando escolhi essas quatro características, acreditava que todas elas tinham um efeito significativo na chance de p1 decidir encontrar p2 novamente, porém como podemos observar nos valores acima, não podemos afirmar nada com relação a característica <strong>inteligente</strong>, pois o intervalo de confiança da variável intel inclui o 0 (zero).</p>
+<p>Já o resultado encontrado para a característica <strong>sincero</strong> me chamou bastante atenção, pois apesar dela ser uma característica que tem efeito no match esse efeito é negativo. Ou seja, p1 achar p2 sincero diminui a chance de p1 se encontrar novamente com p2.</p>
+<p>Por fim, nosso modelo mostrou que ambas características, <strong>divertido</strong> e <strong>atraente</strong>, possuem efeito significativo na chance de p1 decidir se encontrar novamente com p2, e esse efeito é positivo. Ou seja, p1 achar p2 divertido ou atraente aumentam a chance de p1 querer se encontrar com p2 novamente.</p>
 <pre class="r"><code>pR2(model)</code></pre>
 <pre><code>##           llh       llhNull            G2      McFadden          r2ML 
-## -2764.7059673 -3338.8632511  1148.3145677     0.1719619     0.2174182 
+## -2451.7238932 -3338.8632511  1774.2787159     0.2657010     0.3167047 
 ##          r2CU 
-##     0.2862096</code></pre>
+##     0.4159076</code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li>Que fatores nos dados têm mais efeito na chance de um participante querer se encontrar novamente com outro?</li>
 </ol>
+<p>Considerando apenas os fatores com efeito positivo da questão anterior, <strong>atraente</strong> e <strong>divertivo</strong>, podemos afirmar que o fato de p1 achar p2 atraente tem um efeito quase duas vezes maior que o fato de p1 achar p2 divertido, quando se trata da chance de p1 decidir encontrar p2 novamente, ou seja, ser atraente tem mais efeito na chance de um match entre p1 e p2.</p>
 </div>
 
 

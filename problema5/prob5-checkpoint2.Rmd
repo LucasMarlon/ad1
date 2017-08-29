@@ -23,24 +23,37 @@ Nesse checkpoint vamos trabalhar com os mesmos dados do checkpoint anterior, por
 speed.dating = read_csv("./dados/speed-dating2.csv")
 ```
 
-Vamos resposder duas perguntas: 
+Vamos responder duas perguntas: 
 
 1. Dentre os fatores que você acha que podem ter efeito no match, quais fatores têm efeito significativo na chance de p1 decidir se encontrar novamente com p2? E como é esse efeito (positivo/negativo)?
 
-Para responder essa pergunta vou considerar as duas características que considerei no checkpoint anterior, que são: **inteligente** e **divertido**.
+Para responder essa pergunta vou considerar as características: **inteligente**, **divertido**, **atraente** e **sincero**, que são características que eu acredito terem algum efeito no match.
 
 ```{r}
 speed.dating = speed.dating %>% 
   mutate(dec = as.factor(dec))
 
-model = glm(dec ~ intel + fun, 
+model = glm(dec ~ intel + fun + attr + sinc, 
                   data = speed.dating, 
                   family = "binomial")
+
+tidy(model, conf.int = TRUE) %>% 
+  select(-p.value)
+
+# EXPONENCIANDO:
 tidy(model, conf.int = TRUE, exponentiate = TRUE) %>% 
   select(-p.value)
-glance(model)
+```
+
+Quando escolhi essas quatro características, acreditava que todas elas tinham um efeito significativo na chance de p1 decidir encontrar p2 novamente, porém como podemos observar nos valores acima, não podemos afirmar nada com relação a característica **inteligente**, pois o intervalo de confiança da variável intel inclui o 0 (zero).
+
+Já o resultado encontrado para a característica **sincero** me chamou bastante atenção, pois apesar dela ser uma característica que tem efeito no match esse efeito é negativo. Ou seja, p1 achar p2 sincero diminui a chance de p1 se encontrar novamente com p2.
+
+Por fim, nosso modelo mostrou que ambas características, **divertido** e **atraente**, possuem efeito significativo na chance de p1 decidir se encontrar novamente com p2, e esse efeito é positivo. Ou seja, p1 achar p2 divertido ou atraente aumentam a chance de p1 querer se encontrar com p2 novamente.
+```{r}
 pR2(model)
 ```
 
-
 2. Que fatores nos dados têm mais efeito na chance de um participante querer se encontrar novamente com outro?
+
+Considerando apenas os fatores com efeito positivo da questão anterior, **atraente** e **divertivo**, podemos afirmar que o fato de p1 achar p2 atraente tem um efeito quase duas vezes maior que o fato de p1 achar p2 divertido, quando se trata da chance de p1 decidir encontrar p2 novamente, ou seja, ser atraente tem mais efeito na chance de um match entre p1 e p2.  
